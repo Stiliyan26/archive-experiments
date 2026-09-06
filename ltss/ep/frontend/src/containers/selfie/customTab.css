@@ -1,0 +1,58 @@
+/* .my-custom-tabs .nav-link {
+    color: #e0001a;
+    background-color: #f5f5f5;
+    border-radius: 0;
+    margin-right: 5px;
+  }
+  
+  .my-custom-tabs .nav-link.active {
+    color: #fff;
+    background-color: #e0001a;
+  }
+  
+  .my-tab-title {
+    font-weight: bold;
+    text-transform: uppercase;
+  } */
+
+/* ----------------------------- */
+
+.my-custom-tabs .nav-link {
+  color: #e0001a;
+  background-color: #f5f5f5;
+  border-radius: 0;
+  margin-right: 5px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.5s ease, color 0.5s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.my-custom-tabs .nav-link:hover {
+  box-shadow: 0 0 2px #e0001a, 0 0 2px #e0001a, 0 0 2px #e0001a;
+  border-color: #e0001a;
+}
+
+.my-custom-tabs .nav-link.active {
+  color: #fff;
+  background-color: #e0001a;
+  box-shadow: none;
+}
+
+.my-custom-tabs .nav-link:before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background-color: #e0001a;
+  transition: width 1s ease;
+}
+
+.my-custom-tabs .nav-link.active {
+  color: #fff;
+  background-color: #e0001a;
+}
+
+.my-custom-tabs .nav-link.active:before {
+  width: 100%;
+}

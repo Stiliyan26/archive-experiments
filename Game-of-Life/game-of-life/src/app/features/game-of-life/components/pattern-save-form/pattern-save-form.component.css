@@ -1,0 +1,79 @@
+.pattern-save-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pattern-save-form__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.pattern-save-form__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pattern-save-form__input {
+  flex: 1 1 220px;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background-color: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.pattern-save-form__input:focus {
+  outline: none;
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+.pattern-save-form__button {
+  min-width: 140px;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 10px 24px;
+  color: #0f172a;
+  background: linear-gradient(150deg, #34d399, #22d3ee);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.pattern-save-form__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.4);
+}
+
+.pattern-save-form__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  filter: grayscale(35%);
+}
+
+.pattern-save-form__status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.pattern-save-form__status--error {
+  color: #fca5a5;
+}
+
+@media (max-width: 640px) {
+  .pattern-save-form__button {
+    width: 100%;
+  }
+}
+

@@ -1,0 +1,1130 @@
+package bg.latona.santa;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.article.*;
+import bg.latona.santa.entities.invoice.*;
+import bg.latona.santa.entities.offer.*;
+import bg.latona.santa.entities.person.*;
+import bg.latona.santa.entities.security.*;
+import bg.latona.santa.entities.task.*;
+import bg.latona.santa.entities.waste.*;
+import bg.latona.santa.entities.wato.*;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global LocalDate currentLocalDate;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+
+//waste
+
+rule WasteCostCenterFkWaste
+	salience -999
+when
+	$e: WasteCostCenter(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Waste(deleted == false) from $e.wastes
+then
+	warnings.rejectValue("WasteCostCenter","deleted","fkDenyDelete",$fk);
+end
+
+rule WasteTypeFkWaste
+	salience -999
+when
+	$e: WasteType(
+	deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$k: Waste(deleted == false) from $e.wastes
+then
+	warnings.rejectValue("WasteType","deleted","fkDenyDelete",$k);
+end
+
+rule WasteKindFkWasteType
+	salience -999
+when
+	$e: WasteKind(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: WasteType(deleted == false) from $e.wasteTypes
+then
+	warnings.rejectValue("WasteKind","deleted","fkDenyDelete",$fk);
+end
+
+//importing rules
+rule NewLegalPersonFromImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson == null)
+	not LegalPerson(company == $isp.company) from droolsRuleProcedures.findLegalPersonByEik( $isp.bulstat )
+	$ls: LegalStatus() from droolsRuleProcedures.findLegalStatusByCodeAndCompany(
+			$isp.legalStatusId == "BJT" ? 1L : ($isp.legalStatusId == "BJN" ? 2L : ($isp.legalStatusId == "BN" ? 3L : ($isp.legalStatusId == "ORJ" ? 4L : ($isp.legalStatusId == "ORN" ? 5L : 6L)))),
+			$isp.company )
+then
+	LegalPerson legalPerson = new LegalPerson(null,null,null,null, false, $isp.getCompany(),
+			$isp.getName() == null ? "-няма-" : $isp.getName(), 
+			$isp.getBulstat() == null ? "-няма-" : $isp.getBulstat(), 
+			$isp.getEgn() == null ? "-няма-" : $isp.getEgn(), 
+			$isp.getBulstat() == null ? "-няма-" : $isp.getBulstat(), 
+			$isp.getMol() == null ? "-няма-" : $isp.getMol(), 
+			$isp.getAddress() == null ? "-няма-" : $isp.getAddress(), 
+			"-няма-", 
+			$isp.getAddress() == null ? "-няма-" : $isp.getAddress(), 
+			"-няма-", null, $ls, null);
+	entitiesToBeSaved.add(legalPerson);
+	insert( legalPerson );
+	$isp.setLegalPerson( legalPerson );
+	entitiesToBeSaved.add($isp);
+	update( $isp );
+	warnings.add("ImportedSantaPartner automatic import to LegalPerson: "+$isp.getId()+"; "+$isp.getName()+"; "+$isp.getBulstat(), false);
+end
+
+rule ExistingLegalPersonToImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson == null)
+	$lp: LegalPerson(company == $isp.company) from droolsRuleProcedures.findLegalPersonByEik( $isp.bulstat )
+then
+	modify( $isp ) {
+		setLegalPerson( $lp );
+	}
+	entitiesToBeSaved.add( $isp );
+	warnings.add("ImportedSantaPartner automatic import to existing LegalPerson", false);
+end
+
+rule UpdateLegalPersonFromImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson != null
+		&& (name != null && name != legalPerson.name
+			|| bulstat != null && bulstat != legalPerson.eik
+			|| egn != null && egn != legalPerson.egn
+			|| mol != null && mol != legalPerson.mol
+			|| address != null && address != legalPerson.address
+			|| address != null && address != legalPerson.currentAddress
+		)
+	)
+then
+	LegalPerson legalPerson = $isp.getLegalPerson();
+	if($isp.getName() != null) legalPerson.setName($isp.getName());
+	if($isp.getBulstat() != null) legalPerson.setEik($isp.getBulstat());
+	if($isp.getBulstat() != null) legalPerson.setVatNumber($isp.getBulstat());
+	if($isp.getEgn() != null) legalPerson.setEgn($isp.getEgn());
+	if($isp.getMol() != null) legalPerson.setMol($isp.getMol());
+	if($isp.getAddress() != null) legalPerson.setAddress($isp.getAddress());
+	if($isp.getAddress() != null) legalPerson.setCurrentAddress($isp.getAddress());
+	entitiesToBeSaved.add( legalPerson );
+	insert( legalPerson );
+	warnings.add("ImportedSantaPartner automatic update of LegalPerson", false);
+end
+
+rule UpdateLegalPersonLegalStatusFromImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson != null && legalStatusId != null)
+	$ls: LegalStatus(code != $isp.legalPerson.legalStatus.code, company == $isp.company) from droolsRuleProcedures.findLegalStatusByCodeAndCompany(
+			$isp.legalStatusId == "BJT" ? 1L : ($isp.legalStatusId == "BJN" ? 2L : ($isp.legalStatusId == "BN" ? 3L : ($isp.legalStatusId == "ORJ" ? 4L : ($isp.legalStatusId == "ORN" ? 5L : 6L)))),
+			$isp.company )
+then
+	LegalPerson legalPerson = $isp.getLegalPerson();
+	legalPerson.setLegalStatus($ls);
+	entitiesToBeSaved.add( legalPerson );
+	insert( legalPerson );
+	warnings.add("ImportedSantaPartner automatic update of LegalPerson's LegalStatus", false);
+end
+
+rule NewLegalPersonContactFromImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson != null)
+	not Contact(type.code == ContactType.CONTACT_TYPE_GENERAL) from droolsRuleProcedures.findContactByPerson($isp.legalPerson)
+	$ct: ContactType() from droolsRuleProcedures.findContactTypeByCodeAndCompany(ContactType.CONTACT_TYPE_GENERAL,$isp.company)
+then
+	Contact contact = new Contact(null,null,null,null, false, $isp.getCompany(),
+		null, null, $isp.getPhone(), null, $isp.getEmail(), null, $isp.getLegalPerson(), $ct);
+	entitiesToBeSaved.add(contact);
+	insert( contact );
+	warnings.add("ImportedSantaPartner automatic import of LegalPerson's Contact", false);
+end
+
+rule UpdateLegalPersonContactFromImportedSantaPartner
+when
+	$isp: ImportedSantaPartner(legalPerson != null)
+	$con: Contact(type.code == ContactType.CONTACT_TYPE_GENERAL, $isp.phone != phone || $isp.email != email) from droolsRuleProcedures.findContactByPerson($isp.legalPerson)
+then
+	if($isp.getPhone() != null) $con.setPhone($isp.getPhone());
+	if($isp.getEmail() != null) $con.setEmail($isp.getEmail());
+	entitiesToBeSaved.add( $con );
+	insert( $con );
+	warnings.add("ImportedSantaPartner automatic update of LegalPerson's Contact", false);
+end
+
+
+rule NewLegalPersonFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson == null)
+	not LegalPerson(
+					!(vatNumber == "999999999999999" || vatNumber == null || vatNumber == "")
+					|| (vatNumber == "999999999999999" || vatNumber == null || vatNumber == "") && name == $isp.companyName
+				) from droolsRuleProcedures.findLegalPersonByVatNumberAndCompany($isp.vatNumber, $isp.company)
+	$ls: LegalStatus() from droolsRuleProcedures.findLegalStatusByCodeAndCompany( $isp.clName == "Юридическо лице" ? 1L : 6L, $isp.company )
+then
+	LegalPerson legalPerson = new LegalPerson(null,null,null,null, false, $isp.getCompany(),
+			$isp.getCompanyName() == null || $isp.getCompanyName().length()==0 ? "-няма-" : $isp.getCompanyName(), 
+			$isp.getBulstat() == null || $isp.getBulstat().length()==0 ? "-няма-" : $isp.getBulstat(), 
+			$isp.getBulstat() == null || $isp.getBulstat().length()==0 ? "-няма-" : $isp.getBulstat(), 
+			$isp.getVatNumber() == null || $isp.getVatNumber().length()==0 ? "-няма-" : $isp.getVatNumber(), 
+			$isp.getMolName() == null || $isp.getMolName().length()==0 ? "-няма-" : $isp.getMolName(), 
+			$isp.getRegAddress() == null || $isp.getRegAddress().length()==0 ? "-няма-" : $isp.getRegAddress(), 
+			"-няма-", 
+			($isp.getCurrCountry() == null ? "" : $isp.getCurrCountry()+", ")
+			+($isp.getCurrCity() == null ? "" : $isp.getCurrCity()+", ")
+			+$isp.getCurrAddress(), 
+			$isp.getRegCountry() == null || $isp.getRegCountry().length()==0 ? "-няма-" : $isp.getRegCountry(), 
+			$isp.getRegCity() == null || $isp.getRegCity().length()==0 ? "-няма-" : $isp.getRegCity(), 
+			$ls, null);
+	entitiesToBeSaved.add(legalPerson);
+	insert( legalPerson );
+	$isp.setLegalPerson( legalPerson );
+	entitiesToBeSaved.add($isp);
+	update( $isp );
+	warnings.add("ImportedLegalPerson automatic import to LegalPerson", false);
+end
+
+rule ExistingLegalPersonToImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson == null)
+	$lp: LegalPerson(
+					!(vatNumber == "999999999999999" || vatNumber == null || vatNumber == "")
+					|| (vatNumber == "999999999999999" || vatNumber == null || vatNumber == "") && name == $isp.companyName
+				) from droolsRuleProcedures.findLegalPersonByVatNumberAndCompany($isp.vatNumber, $isp.company)
+then
+	modify( $isp ) {
+		setLegalPerson( $lp );
+	}
+	entitiesToBeSaved.add( $isp );
+	warnings.add("ImportedLegalPerson automatic import to existing LegalPerson", false);
+end
+
+rule UpdateLegalPersonFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson != null
+		&& (companyName != null && $isp.companyName.length()>0 && companyName != legalPerson.name
+			|| vatNumber != null && $isp.vatNumber.length()>0 && vatNumber != legalPerson.vatNumber
+			|| bulstat != null && $isp.bulstat.length()>0 && bulstat != legalPerson.eik
+			|| bulstat != null && $isp.bulstat.length()>0 && bulstat != legalPerson.egn
+			|| molName != null && $isp.molName.length()>0 && molName != legalPerson.mol
+			|| regAddress != null && $isp.regAddress.length()>0 && regAddress != legalPerson.address
+			|| currAddress != null && $isp.currAddress.length()>0 
+				&& ($isp.currCountry == null ? "" : $isp.currCountry+", ")
+				+($isp.currCity == null ? "" : $isp.currCity+", ")
+				+$isp.currAddress != legalPerson.currentAddress
+			|| regCountry != null && $isp.regCountry.length()>0 && regCountry != legalPerson.country
+			|| regCity != null && $isp.regCity.length()>0 && regCity != legalPerson.city
+		)
+	)
+then
+	LegalPerson legalPerson = $isp.getLegalPerson();
+	if($isp.getCompanyName() != null && $isp.getCompanyName().length()>0) legalPerson.setName($isp.getCompanyName());
+	if($isp.getBulstat() != null && $isp.getBulstat().length()>0) legalPerson.setEik($isp.getBulstat());
+	if($isp.getBulstat() != null && $isp.getBulstat().length()>0) legalPerson.setEgn($isp.getBulstat());
+	if($isp.getVatNumber() != null && $isp.getVatNumber().length()>0) legalPerson.setVatNumber($isp.getVatNumber());
+	if($isp.getMolName() != null && $isp.getMolName().length()>0) legalPerson.setMol($isp.getMolName());
+	if($isp.getRegAddress() != null && $isp.getRegAddress().length()>0) legalPerson.setAddress($isp.getRegAddress());
+	if($isp.getCurrAddress() != null && $isp.getCurrAddress().length()>0) legalPerson.setCurrentAddress(
+			($isp.getCurrCountry() == null ? "" : $isp.getCurrCountry()+", ")
+			+($isp.getCurrCity() == null ? "" : $isp.getCurrCity()+", ")
+			+$isp.getCurrAddress()
+		);
+	if($isp.getRegCountry() != null && $isp.getRegCountry().length()>0) legalPerson.setCountry($isp.getRegCountry());
+	if($isp.getRegCity() != null && $isp.getRegCity().length()>0) legalPerson.setCity($isp.getRegCity());
+	entitiesToBeSaved.add( legalPerson );
+	insert( legalPerson );
+	warnings.add("ImportedLegalPerson automatic update of LegalPerson", false);
+end
+
+rule UpdateLegalPersonLegalStatusFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson != null && clName != null)
+	$ls: LegalStatus(code != $isp.legalPerson.legalStatus.code) from droolsRuleProcedures.findLegalStatusByCodeAndCompany( $isp.clName == "Юридическо лице" ? 1L : 6L, $isp.company )
+then
+	LegalPerson legalPerson = $isp.getLegalPerson();
+	legalPerson.setLegalStatus($ls);
+	entitiesToBeSaved.add( legalPerson );
+	insert( legalPerson );
+	warnings.add("ImportedLegalPerson automatic update of LegalPerson's LegalStatus", false);
+end
+
+rule NewLegalPersonContactFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson != null)
+	not Contact(type.code == ContactType.CONTACT_TYPE_GENERAL) from droolsRuleProcedures.findContactByPerson($isp.legalPerson)
+	$ct: ContactType() from droolsRuleProcedures.findContactTypeByCodeAndCompany(ContactType.CONTACT_TYPE_GENERAL,$isp.company)
+then
+	Contact contact = new Contact(null,null,null,null, false, $isp.getCompany(),
+		null, null, $isp.getPhoneNumber(), null, $isp.getEmail(), null, $isp.getLegalPerson(), $ct);
+	entitiesToBeSaved.add(contact);
+	insert( contact );
+	warnings.add("ImportedLegalPerson automatic import of LegalPerson's Contact", false);
+end
+
+rule UpdateLegalPersonContactFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson != null)
+	$con: Contact(type.code == ContactType.CONTACT_TYPE_GENERAL, $isp.phoneNumber != phone || $isp.email != email) from droolsRuleProcedures.findContactByPerson($isp.legalPerson)
+then
+	if($isp.getPhoneNumber() != null) $con.setPhone($isp.getPhoneNumber());
+	if($isp.getEmail() != null) $con.setEmail($isp.getEmail());
+	entitiesToBeSaved.add( $con );
+	insert( $con );
+	warnings.add("ImportedLegalPerson automatic update of LegalPerson's Contact", false);
+end
+
+//TODO test delete
+rule DeleteLegalPersonFromImportedLegalPerson
+when
+	$isp: ImportedLegalPerson(legalPerson != null, foreignDeleted == true)
+then
+	LegalPerson legalPerson = $isp.getLegalPerson();
+	droolsRuleProcedures.delete( legalPerson );
+	insert( legalPerson );
+	warnings.add("ImportedLegalPerson automatic delete of LegalPerson", false);
+end
+
+
+rule UpdateImportedLegalPersonGroupAssignedSales
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "1")
+	$as: SecUser($ilpg.assignedSales != this) from droolsRuleProcedures.findSecUserByFullNameAndCompany($ilpg.groupName, $ilpg.company)
+then
+	modify($ilpg) {
+		setAssignedSales($as);
+	}
+	entitiesToBeSaved.add($ilpg);
+end
+
+
+rule NewDirectionFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "2")
+	not DirectionCategory() from droolsRuleProcedures.findDirectionCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	DirectionCategory dir = new DirectionCategory(null,null,null,null, false, $ilpg.getCompany(),
+			$ilpg.getGroupName(), $ilpg.getGroupCode());
+	entitiesToBeSaved.add(dir);
+	insert(dir);
+	$ilpg.setDirection(dir);
+	entitiesToBeSaved.add($ilpg);
+	update($ilpg);
+end
+
+rule UpdateDirectionFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "2")
+	$dir: DirectionCategory(name != $ilpg.groupName) from droolsRuleProcedures.findDirectionCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	$dir.setName($ilpg.getGroupName());
+	entitiesToBeSaved.add($dir);
+	insert($dir);
+end
+
+rule UpdateImportedLegalPersonGroupDirection
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "2")
+	$dir: DirectionCategory($ilpg.direction != this) from droolsRuleProcedures.findDirectionCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	modify($ilpg) {
+		setDirection($dir);
+	}
+	entitiesToBeSaved.add($ilpg);
+end
+
+
+rule NewAreaFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "3")
+	not AreaCategory() from droolsRuleProcedures.findAreaCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	AreaCategory dir = new AreaCategory(null,null,null,null, false, $ilpg.getCompany(),
+			$ilpg.getGroupName(), $ilpg.getGroupCode());
+	entitiesToBeSaved.add(dir);
+	insert(dir);
+	$ilpg.setArea(dir);
+	entitiesToBeSaved.add($ilpg);
+	update($ilpg);
+end
+
+rule UpdateAreaFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "3")
+	$dir: AreaCategory(name != $ilpg.groupName) from droolsRuleProcedures.findAreaCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	$dir.setName($ilpg.getGroupName());
+	entitiesToBeSaved.add($dir);
+	insert($dir);
+end
+
+rule UpdateImportedLegalPersonGroupArea
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "3")
+	$dir: AreaCategory($ilpg.area != this) from droolsRuleProcedures.findAreaCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	modify($ilpg) {
+		setArea($dir);
+	}
+	entitiesToBeSaved.add($ilpg);
+end
+
+
+rule NewBusinessFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "4")
+	not BusinessCategory() from droolsRuleProcedures.findBusinessCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	BusinessCategory dir = new BusinessCategory(null,null,null,null, false, $ilpg.getCompany(),
+			$ilpg.getGroupName(), $ilpg.getGroupCode());
+	entitiesToBeSaved.add(dir);
+	insert(dir);
+	$ilpg.setBusiness(dir);
+	entitiesToBeSaved.add($ilpg);
+	update($ilpg);
+end
+
+rule UpdateBusinessFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "4")
+	$dir: BusinessCategory(name != $ilpg.groupName) from droolsRuleProcedures.findBusinessCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	$dir.setName($ilpg.getGroupName());
+	entitiesToBeSaved.add($dir);
+	insert($dir);
+end
+
+rule UpdateImportedLegalPersonGroupBusiness
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "4")
+	$dir: BusinessCategory($ilpg.business != this) from droolsRuleProcedures.findBusinessCategoryByCodeAndCompany($ilpg.groupCode,$ilpg.company)
+then
+	modify($ilpg) {
+		setBusiness($dir);
+	}
+	entitiesToBeSaved.add($ilpg);
+end
+
+
+rule NewGeneralCategoryFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "5")
+	not GeneralCategory() from droolsRuleProcedures.findGeneralCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	GeneralCategory dir = new GeneralCategory(null,null,null,null, false, $ilpg.getCompany(),
+			$ilpg.getGroupName(), $ilpg.getGroupCode());
+	entitiesToBeSaved.add(dir);
+	insert(dir);
+	$ilpg.setGeneralCategory(dir);
+	entitiesToBeSaved.add($ilpg);
+	update($ilpg);
+end
+
+rule UpdateGeneralCategoryFromImportedLegalPersonGroup
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "5")
+	$dir: GeneralCategory(name != $ilpg.groupName) from droolsRuleProcedures.findGeneralCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	$dir.setName($ilpg.getGroupName());
+	entitiesToBeSaved.add($dir);
+	insert($dir);
+end
+
+rule UpdateImportedLegalPersonGroupGeneralCategory
+when
+	$ilpg: ImportedLegalPersonGroup(mainGroupCode == "5")
+	$dir: GeneralCategory($ilpg.generalCategory != this) from droolsRuleProcedures.findGeneralCategoryByCodeAndCompany($ilpg.groupCode, $ilpg.company)
+then
+	modify($ilpg) {
+		setGeneralCategory($dir);
+	}
+	entitiesToBeSaved.add($ilpg);
+end
+
+
+rule UpdateImportedLegalPersonGroupLegalPerson
+when
+	$impLPG: ImportedLegalPersonGroup(legalPerson == null)
+	$ilp: ImportedLegalPerson(legalPerson != null) from droolsRuleProcedures.findImportedLegalPersonByForeignId($impLPG.contragentID)
+then
+	modify($impLPG) {
+		setLegalPerson($ilp.getLegalPerson());
+	}
+	entitiesToBeSaved.add($impLPG);
+end
+
+
+
+rule NewArticleProductFromImportedArticle
+when
+	$impArt: ImportedArticle(article == null, articleType == 5)
+	not Article() from droolsRuleProcedures.findArticleByForeignId( $impArt.foreignId )
+then
+	ArticleProduct articleProduct = new ArticleProduct(null,null,null,null, false, $impArt.getCompany(),
+			$impArt.getName() == null ? null : $impArt.getName(), 
+			$impArt.getForeignId(),
+			$impArt.getPredNom() == null ? null : $impArt.getPredNom(), 
+			$impArt.getNomNom() == null ? null : $impArt.getNomNom(), 
+			$impArt.getMeasureForeignId() == null ? null : $impArt.getMeasureForeignId(), 
+			$impArt.getMeasure() == null ? null : $impArt.getMeasure(), 
+			$impArt.getMeasureShort() == null ? null : $impArt.getMeasureShort()
+		);
+	entitiesToBeSaved.add(articleProduct);
+	insert( articleProduct );
+	$impArt.setArticle( articleProduct );
+	entitiesToBeSaved.add($impArt);
+	update( $impArt );
+	warnings.add("ImportedArticle automatic import to ArticleProduct", false);
+end
+
+rule UpdateArticleProductFromImportedArticle
+when
+	$impArt: ImportedArticle(article != null && articleType == 5
+		&& (name != null && name != article.name
+			|| predNom != null && predNom != ((ArticleProduct) article).predNom
+			|| nomNom != null && nomNom != ((ArticleProduct) article).nomNom
+			|| measureForeignId != null && measureForeignId != ((ArticleProduct) article).measureForeignId
+			|| measure != null && measure != ((ArticleProduct) article).measure
+			|| measureShort != null && measureShort != ((ArticleProduct) article).measureShort
+		)
+	)
+then
+	ArticleProduct articleProduct = (ArticleProduct) $impArt.getArticle();
+	if($impArt.getName() != null) articleProduct.setName($impArt.getName());
+	if($impArt.getPredNom() != null) articleProduct.setPredNom($impArt.getPredNom());
+	if($impArt.getNomNom() != null) articleProduct.setNomNom($impArt.getNomNom());
+	if($impArt.getMeasureForeignId() != null) articleProduct.setMeasureForeignId($impArt.getMeasureForeignId());
+	if($impArt.getMeasure() != null) articleProduct.setMeasure($impArt.getMeasure());
+	if($impArt.getMeasureShort() != null) articleProduct.setMeasureShort($impArt.getMeasureShort());
+	entitiesToBeSaved.add( articleProduct );
+	insert( articleProduct );
+	warnings.add("ImportedArticle automatic update of ArticleProduct", false);
+end
+
+
+rule NewArticleServiceFromImportedArticle
+when
+	$impArt: ImportedArticle(article == null, articleType == 3)
+	not Article() from droolsRuleProcedures.findArticleByForeignId( $impArt.foreignId )
+then
+	ArticleService articleService = new ArticleService(null,null,null,null, false, $impArt.getCompany(),
+			$impArt.getName() == null ? null : $impArt.getName(), 
+			$impArt.getForeignId(),
+			$impArt.getMeasureForeignId() == null ? null : $impArt.getMeasureForeignId(), 
+			$impArt.getMeasure() == null ? null : $impArt.getMeasure(), 
+			$impArt.getMeasureShort() == null ? null : $impArt.getMeasureShort()
+		);
+	entitiesToBeSaved.add(articleService);
+	insert( articleService );
+	$impArt.setArticle( articleService );
+	entitiesToBeSaved.add($impArt);
+	update( $impArt );
+	warnings.add("ImportedArticle automatic import to ArticleService", false);
+end
+
+rule UpdateImportedArticlePropagate
+when
+	$imp: ImportedArticle(id > 0)
+	$exp: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByArticle( $imp )
+then
+	insert( $exp );
+end
+
+rule UpdateArticleServiceFromImportedArticle
+when
+	$impArt: ImportedArticle(article != null && articleType == 3
+		&& (name != null && name != article.name
+			|| measureForeignId != null && measureForeignId != ((ArticleService) article).measureForeignId
+			|| measure != null && measure != ((ArticleService) article).measure
+			|| measureShort != null && measureShort != ((ArticleService) article).measureShort
+		)
+	)
+then
+	ArticleService articleService = (ArticleService) $impArt.getArticle();
+	if($impArt.getName() != null) articleService.setName($impArt.getName());
+	if($impArt.getMeasureForeignId() != null) articleService.setMeasureForeignId($impArt.getMeasureForeignId());
+	if($impArt.getMeasure() != null) articleService.setMeasure($impArt.getMeasure());
+	if($impArt.getMeasureShort() != null) articleService.setMeasureShort($impArt.getMeasureShort());
+	entitiesToBeSaved.add( articleService );
+	insert( articleService );
+	warnings.add("ImportedArticle automatic update of ArticleService", false);
+end
+
+
+rule NewArticlePriceRateFromImportedArticle
+when
+	$impArt: ImportedArticle(article != null)
+	$curr: Currency() from droolsRuleProcedures.findCurrencyByNameAndCompany($impArt.currency, $impArt.company)
+	not ArticlePriceRate(
+		(validToDate == null || validToDate > currentLocalDate)
+	) from droolsRuleProcedures.findArticlePriceRateByVendorAndArticle(null, $impArt.article)
+then
+	ArticlePriceRate articlePriceRate = new ArticlePriceRate(null,null,null,null, false, $impArt.getCompany(),
+			null,
+			$impArt.getArticle(), 
+			$impArt.getSellPrice(),
+			$curr, 
+			currentLocalDate,
+			LocalDate.of(3000,01,01)
+		);
+	entitiesToBeSaved.add(articlePriceRate);
+	insert( articlePriceRate );
+	warnings.add("ImportedArticle automatic import to ArticlePriceRate", false);
+end
+
+rule UpdateArticlePriceRateFromImportedArticle
+when
+	$impArt: ImportedArticle(article != null)
+	$curr: Currency() from droolsRuleProcedures.findCurrencyByNameAndCompany($impArt.currency, $impArt.company)
+	$apr: ArticlePriceRate(
+		($impArt.sellPrice != $apr.price || $curr != $apr.currency)
+		&& (validToDate == null || validToDate > currentLocalDate)
+		&& (validFromDate == null || validFromDate < currentLocalDate)
+	) from droolsRuleProcedures.findArticlePriceRateByVendorAndArticle(null, $impArt.article)
+then
+	$apr.setValidToDate( currentLocalDate );
+	entitiesToBeSaved.add( $apr );
+	insert( $apr );
+	ArticlePriceRate articlePriceRate = new ArticlePriceRate(null,null,null,null, false, $impArt.getCompany(),
+			null,
+			$impArt.getArticle(), 
+			$impArt.getSellPrice(),
+			$curr, 
+			currentLocalDate,
+			LocalDate.of(3000,01,01)
+		);
+	entitiesToBeSaved.add(articlePriceRate);
+	insert( articlePriceRate );
+	warnings.add("ImportedArticle automatic update of ArticlePriceRate", false);
+end
+
+
+rule UpdateImportedExpeditionListOrder
+when
+	$imp: ImportedExpeditionList(order == null)
+	$ref: ImportedOrder() from droolsRuleProcedures.findImportedOrderByForeignId($imp.foreignOrderId)
+then
+	modify( $imp ) {
+		setOrder( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedExpeditionListOrder2
+when
+	$ref: ImportedOrder(validationEvent.startsWith("after"))
+	$imp: ImportedExpeditionList() from droolsRuleProcedures.findImportedExpeditionListByForeignOrderIdAndOrder($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setOrder( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedExpeditionListRowOrderRow
+when
+	$imp: ImportedExpeditionListRow(orderRow == null)
+	$ref: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByForeignId($imp.foreignOrderRowId)
+then
+	modify( $imp ) {
+		setOrderRow( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedExpeditionListRowOrderRow2
+when
+	$ref: ImportedOrderRow(validationEvent.startsWith("after"))
+	$imp: ImportedExpeditionListRow() from droolsRuleProcedures.findImportedExpeditionListRowByForeignOrderRowIdAndOrderRow($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setOrderRow( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedExpeditionListRowExpeditionList
+when
+	$imp: ImportedExpeditionListRow(expeditionList == null)
+	$ref: ImportedExpeditionList() from droolsRuleProcedures.findImportedExpeditionListByForeignId($imp.foreignExpeditionListId)
+then
+	modify( $imp ) {
+		setExpeditionList( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedExpeditionListRowExpeditionList2
+when
+	$ref: ImportedExpeditionList(validationEvent.startsWith("after"))
+	$imp: ImportedExpeditionListRow() from droolsRuleProcedures.findImportedExpeditionListRowByForeignExpeditionListIdAndExpeditionList($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setExpeditionList( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedInvoiceOrder
+when
+	$imp: ImportedInvoice(order == null)
+	$ref: ImportedOrder() from droolsRuleProcedures.findImportedOrderByForeignId($imp.foreignOrderId)
+then
+	modify( $imp ) {
+		setOrder( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedInvoiceOrder2
+when
+	$ref: ImportedOrder(validationEvent.startsWith("after"))
+	$imp: ImportedInvoice() from droolsRuleProcedures.findImportedInvoiceByForeignOrderIdAndOrder($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setOrder( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedInvoicePropagate
+when
+	$imp: ImportedInvoice(id > 0)
+	$pmnt: ImportedInvoicePayment() from $imp.importedInvoicePayments
+then
+	insert( $pmnt );
+end
+
+rule UpdateImportedInvoiceRowOrderRow
+when
+	$imp: ImportedInvoiceRow(orderRow == null)
+	$ref: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByForeignId($imp.foreignOrderRowId)
+then
+	modify( $imp ) {
+		setOrderRow( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedInvoiceRowOrderRow2
+when
+	$ref: ImportedOrderRow(validationEvent.startsWith("after"))
+	$imp: ImportedInvoiceRow() from droolsRuleProcedures.findImportedInvoiceRowByForeignOrderRowIdAndOrderRow($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setOrderRow( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedInvoiceRowInvoice
+when
+	$imp: ImportedInvoiceRow(invoice == null)
+	$ref: ImportedInvoice() from droolsRuleProcedures.findImportedInvoiceByForeignId($imp.foreignInvoiceId)
+then
+	modify( $imp ) {
+		setInvoice( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedInvoiceRowInvoice2
+when
+	$ref: ImportedInvoice(validationEvent.startsWith("after"))
+	$imp: ImportedInvoiceRow() from droolsRuleProcedures.findImportedInvoiceRowByForeignInvoiceIdAndInvoice($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setInvoice( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedInvoicePaymentContragent
+when
+	$imp: ImportedInvoicePayment(contragent == null)
+	$ref: ImportedLegalPerson() from droolsRuleProcedures.findImportedLegalPersonByForeignId($imp.foreignContragentId)
+then
+	modify( $imp ) {
+		setContragent( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedInvoicePaymentContragent2
+when
+	$ref: ImportedLegalPerson(validationEvent.startsWith("after"))
+	$imp: ImportedInvoicePayment() from droolsRuleProcedures.findImportedInvoicePaymentByForeignContragentIdAndContragent($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setContragent( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedInvoicePaymentInvoice
+when
+	$imp: ImportedInvoicePayment(invoice == null)
+	$ref: ImportedInvoice() from droolsRuleProcedures.findImportedInvoiceByForeignId($imp.foreignId)
+then
+	modify( $imp ) {
+		setInvoice( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedInvoicePaymentInvoice2
+when
+	$ref: ImportedInvoice(validationEvent.startsWith("after"))
+	$imp: ImportedInvoicePayment() from droolsRuleProcedures.findImportedInvoicePaymentByForeignIdAndInvoice($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setInvoice( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedOrderOffer
+when
+	$imp: ImportedOrder(offer == null)
+	$ref: OfferToClient() from droolsRuleProcedures.findOfferToClientByForeignId($imp.foreignId)
+then
+	modify( $imp ) {
+		setOffer( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedOrderOffer2
+when
+	$ref: OfferToClient(validationEvent.startsWith("after"))
+	$imp: ImportedOrder() from droolsRuleProcedures.findImportedOrderByForeignIdAndOffer($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setOffer( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedOrderPropagate
+when
+	$imp: ImportedOrder(id > 0)
+	$inv: ImportedInvoice() from $imp.importedInvoices
+then
+	insert( $inv );
+end
+
+rule UpdateImportedOrderRowOrder
+when
+	$imp: ImportedOrderRow(order == null)
+	$ref: ImportedOrder() from droolsRuleProcedures.findImportedOrderByForeignId($imp.foreignOrderId)
+then
+	modify( $imp ) {
+		setOrder( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedOrderRowOrder2
+when
+	$ref: ImportedOrder(validationEvent.startsWith("after"))
+	$imp: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByForeignOrderIdAndOrder($ref.foreignId,null)
+then
+	insert( $imp );
+	$imp.setOrder( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedOrderRowArticle
+when
+	$imp: ImportedOrderRow(article == null)
+	$ref: ImportedArticle() from droolsRuleProcedures.findImportedArticleByForeignId($imp.foreignArticleId)
+then
+	modify( $imp ) {
+		setArticle( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedOrderRowArticle2
+when
+	$ref: ImportedArticle(validationEvent.startsWith("after"))
+	$imp: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByForeignArticleIdAndArticle($ref.foreignId, null)
+then
+	insert( $imp );
+	$imp.setArticle( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedOrderRowOfferLine
+when
+	$imp: ImportedOrderRow(offerLine == null, article != null, article.article != null, order != null, order.offer != null)
+	$ref: OfferLine() from droolsRuleProcedures.findOfferLineByArticleAndOfferToClient($imp.article.article, $imp.order.offer)
+then
+	modify( $imp ) {
+		setOfferLine( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedOrderRowOfferLine2
+when
+	$ref: OfferLine(validationEvent.startsWith("after"))
+	$ord: ImportedOrder() from droolsRuleProcedures.findImportedOrderByOffer($ref.offerToClient)
+	$impArt: ImportedArticle() from droolsRuleProcedures.findImportedArticleByForeignId($ref.article.foreignId)
+	$imp: ImportedOrderRow() from droolsRuleProcedures.findImportedOrderRowByOrderAndArticleAndOfferLine($ord, $impArt, null)
+then
+	insert( $imp );
+	$imp.setOfferLine( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule UpdateImportedOrderRowPropagate
+when
+	$imp: ImportedOrderRow(id > 0)
+	$exp: ImportedExpeditionListRow() from $imp.importedExpeditionListRows
+then
+	insert( $exp );
+end
+
+rule UpdateImportedWarehouseStockArticle
+when
+	$imp: ImportedWarehouseStock(article == null)
+	$ref: ImportedArticle() from droolsRuleProcedures.findImportedArticleByForeignId($imp.foreignArticleId)
+then
+	modify( $imp ) {
+		setArticle( $ref );
+	}
+	entitiesToBeSaved.add( $imp );
+end
+
+rule UpdateImportedWarehouseStockArticle2
+when
+	$ref: ImportedArticle(validationEvent.startsWith("after"))
+	$imp: ImportedWarehouseStock() from droolsRuleProcedures.findImportedWarehouseStockByForeignArticleId($ref.foreignId)
+then
+	insert( $imp );
+	$imp.setArticle( $ref );
+	entitiesToBeSaved.add( $imp );
+	update( $imp );
+end
+
+rule NewAttachableRevenuesAndExpensesFromImportedExpeditionListRow
+when
+	$expList: ImportedExpeditionListRow(id > 0, quantity != 0, orderRow != null, orderRow.offerLine != null, orderRow.offerLine.article != null, orderRow.offerLine.offerToClient != null)
+	not AttachableRevenuesAndExpenses() from droolsRuleProcedures.findAttachableRevenuesAndExpensesByArticleAndAttachableAndCompanyAndDeleted($expList.orderRow.offerLine.article, $expList.orderRow.offerLine.offerToClient, $expList.company, false)
+then
+	AttachableRevenuesAndExpenses revExp = new AttachableRevenuesAndExpenses(null,null,null,null, false, $expList.getCompany(),
+			$expList.getOrderRow().getOfferLine().getArticle(), 
+			$expList.getQuantity().negate(), 
+			$expList.getOrderRow().getOfferLine().getOfferToClient());
+	insert( revExp );
+	entitiesToBeSaved.add( revExp );
+end
+
+rule UpdateAttachableRevenuesAndExpensesFromImportedExpeditionListRow
+when
+	$expList: ImportedExpeditionListRow(id > 0, quantity != 0, orderRow != null, orderRow.offerLine != null, orderRow.offerLine.article != null, orderRow.offerLine.offerToClient != null)
+	$revExp: AttachableRevenuesAndExpenses() from droolsRuleProcedures.findAttachableRevenuesAndExpensesByArticleAndAttachableAndCompanyAndDeleted($expList.orderRow.offerLine.article, $expList.orderRow.offerLine.offerToClient, $expList.company, false)
+	accumulate(
+		ImportedExpeditionListRow($quantity: quantity) from droolsRuleProcedures.findImportedExpeditionListRowByOrderRow($expList.orderRow); 
+		$sum: sum($quantity)
+	)
+then
+	$revExp.setAmmount( $sum );
+	insert( $revExp );
+	entitiesToBeSaved.add( $revExp );
+end
+
+rule NewAttachableRevenuesAndExpensesFromImportedInvoicePayment
+when
+	$pmnt: ImportedInvoicePayment(id > 0, totalPayed != 0, invoice != null, invoice.order != null, invoice.order.offer != null)
+	$curr: Currency() from droolsRuleProcedures.findCurrencyByNameAndCompany("BGN", $pmnt.getCompany()) //TODO get correct currency for invoices
+	not AttachableRevenuesAndExpenses() from droolsRuleProcedures.findAttachableRevenuesAndExpensesByArticleAndAttachableAndCompanyAndDeleted($curr, $pmnt.invoice.order.offer, $pmnt.company, false)
+then
+	AttachableRevenuesAndExpenses revExp = new AttachableRevenuesAndExpenses(null,null,null,null, false, $pmnt.getCompany(),
+			$curr, 
+			$pmnt.getTotalPayed(), 
+			$pmnt.getInvoice().getOrder().getOffer());
+	insert( revExp );
+	entitiesToBeSaved.add( revExp );
+end
+
+rule UpdateAttachableRevenuesAndExpensesFromImportedInvoicePayment
+when
+	$pmnt: ImportedInvoicePayment(id > 0, totalPayed != 0, invoice != null, invoice.order != null, invoice.order.offer != null)
+	$curr: Currency() from droolsRuleProcedures.findCurrencyByNameAndCompany("BGN", $pmnt.getCompany()) //TODO get correct currency for invoices
+	$revExp: AttachableRevenuesAndExpenses() from droolsRuleProcedures.findAttachableRevenuesAndExpensesByArticleAndAttachableAndCompanyAndDeleted($curr, $pmnt.invoice.order.offer, $pmnt.company, false)
+	accumulate(
+		$inv: ImportedInvoice() from $pmnt.invoice.order.importedInvoices
+		and ImportedInvoicePayment($totalPayed: totalPayed) from $inv.importedInvoicePayments; 
+		$sum: sum($totalPayed)
+	)
+then
+	$revExp.setAmmount( $sum );
+	insert( $revExp );
+	entitiesToBeSaved.add( $revExp );
+end
+
+rule ImportedOrderRowFkImportedInvoiceRow
+	salience -999
+when
+	$e: ImportedOrderRow(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedInvoiceRow(deleted == false) from $e.importedInvoiceRows
+then
+	warnings.rejectValue("ImportedOrderRow","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedInvoiceFkImportedInvoiceRow
+	salience -999
+when
+	$e: ImportedInvoice(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedInvoiceRow(deleted == false) from $e.importedInvoiceRows
+then
+	warnings.rejectValue("ImportedInvoice","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedOrderFkImportedOrderRow
+	salience -999
+when
+	$e: ImportedOrder(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedOrderRow(deleted == false) from $e.importedOrderRows
+then
+	warnings.rejectValue("ImportedOrder","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedArticleFkImportedOrderRow
+	salience -999
+when
+	$e: ImportedArticle(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedOrderRow(deleted == false) from $e.importedOrderRows
+then
+	warnings.rejectValue("ImportedArticle","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedArticleFkImportedWarehouseStock
+	salience -999
+when
+	$e: ImportedArticle(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedWarehouseStock(deleted == false) from $e.importedWarehouseStocks
+then
+	warnings.rejectValue("ImportedArticle","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedOrderFkImportedExpeditionList
+	salience -999
+when
+	$e: ImportedOrder(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedExpeditionList(deleted == false) from $e.importedExpeditionLists
+then
+	warnings.rejectValue("ImportedOrder","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedOrderRowFkImportedExpeditionListRow
+	salience -999
+when
+	$e: ImportedOrderRow(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedExpeditionListRow(deleted == false) from $e.importedExpeditionListRows
+then
+	warnings.rejectValue("ImportedOrderRow","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedExpeditionListFkImportedExpeditionListRow
+	salience -999
+when
+	$e: ImportedExpeditionList(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedExpeditionListRow(deleted == false) from $e.importedExpeditionListRows
+then
+	warnings.rejectValue("ImportedExpeditionList","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedOrderFkImportedInvoice
+	salience -999
+when
+	$e: ImportedOrder(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedInvoice(deleted == false) from $e.importedInvoices
+then
+	warnings.rejectValue("ImportedOrder","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedInvoiceFkImportedInvoicePayment
+	salience -999
+when
+	$e: ImportedInvoice(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedInvoicePayment(deleted == false) from $e.importedInvoicePayments
+then
+	warnings.rejectValue("ImportedInvoice","deleted","fkDenyDelete",$fk);
+end
+
+rule ImportedLegalPersonFkImportedInvoicePayment
+	salience -999
+when
+	$e: ImportedLegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedInvoicePayment(deleted == false) from $e.importedInvoicePayments
+then
+	warnings.rejectValue("ImportedLegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule DirectionCategoryFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: DirectionCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("DirectionCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule AreaCategoryFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: AreaCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("AreaCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule BusinessCategoryFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: BusinessCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("BusinessCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule GeneralCategoryFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: GeneralCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("GeneralCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule ArticleFkImportedArticle
+	salience -999
+when
+	$e: Article(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedArticle(deleted == false) from $e.importedArticles
+then
+	warnings.rejectValue("Article","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+

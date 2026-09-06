@@ -1,0 +1,229 @@
+/* .header {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    height: 60px;
+    padding: 0 20px;
+    border: 2px solid #ccc;
+    position: relative;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+} */
+
+/* User name and login section */
+/* .user-info {
+    flex: 1;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    position: relative;
+    text-align: center;
+} */
+
+/* .user-info span {
+    color: #666;
+    font-size: 14px;
+    display: block;
+    position: absolute;
+    top: -18px;
+} */
+
+/* Red buttons */
+/* .header-buttons {
+    display: flex;
+    gap: 10px;
+} */
+
+/* .button {
+    background-color: #e60000;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s;
+} */ /* transform: skewX(-15deg); To create slanted look */
+
+/* .button:hover {
+    background-color: #fff;
+    color: #e60000
+} */
+
+/* Skewing text back to normal */ /* transform: skewX(15deg); */
+/* .button span {
+    display: inline-block;
+} */
+
+
+/* RESPONSIVE BUTTON LOGIC BELOW */
+
+.header {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    height: 60px;
+    padding: 0 20px;
+    border: 2px solid #ccc;
+    position: relative;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* User name and login section */
+.user-info {
+    flex: 1;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    position: relative;
+    text-align: center;
+}
+
+.user-info span {
+    color: #666;
+    font-size: 14px;
+    display: block;
+    position: absolute;
+    top: -18px;
+}
+
+/* Red buttons */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.button {
+    background-color: #e60000;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, padding 0.3s;
+}
+
+.button:hover {
+    background-color: #fff;
+    color: #e60000;
+}
+
+/* Skewing text back to normal */
+.button span {
+    display: inline-block;
+}
+
+/* Responsive styles */
+
+/* For screens 768px and smaller (tablets) */
+@media (max-width: 768px) {
+    .button {
+        padding: 8px 16px; /* Slightly smaller padding */
+        font-size: 14px; /* Adjust font size */
+    }
+}
+
+/* For screens 480px and smaller (mobile) */
+@media (max-width: 480px) {
+    .button {
+        padding: 6px 12px; /* Smaller padding */
+        font-size: 12px; /* Smaller font size */
+        box-shadow: none; /* Remove shadow on small screens */
+    }
+
+    .header {
+        flex-direction: column; /* Stack header elements */
+        height: auto;
+        padding: 10px;
+    }
+
+    .user-info {
+        margin-bottom: 10px; /* Add space between elements */
+    }
+}
+
+.customDropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.customDropdown button {
+    background-color: #e60000;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    /* transform: skewX(-15deg); */
+    /* To create slanted look */
+    transition: background-color 0.3s;
+}
+
+.customDropdown button:hover {
+    background-color: #fff;
+    color: #e60000;
+}
+
+/* customDropdown Content */
+.customDropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 100%;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+    overflow: hidden;
+    top: 100%;
+    /* Positions below the button */
+    left: 0;
+    /* transform: skewX(15deg); */
+    /* Counter-skew to align under the button */
+}
+
+.customDropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    /* transform: skewX(-15deg); */
+    /* Counter the skew of customDropdown content items */
+}
+
+.customDropdown-content a:hover {
+    /* background-color: #ddd; */
+    /* background-color: #fff;
+    color: #e60000; */
+    background-color: #f9bda9;
+    color: #fff;
+}
+
+/* Show customDropdown on hover */
+.customDropdown:hover .customDropdown-content {
+    display: block;
+}
+
+#dropdown-style {
+    border-radius: 0;
+    background-color: #e60000;
+    padding: 10px 20px;
+    text-align: center;
+    border: 1px solid #e60000;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, padding 0.3s;
+}
+
+#dropdown-style:hover {
+    background-color: white !important;  /* Prevent red background */
+    color: #e60000 !important;  /* Prevent red text */
+    border: 1px solid #ccc !important;  /* Keep consistent border */
+    box-shadow: none !important;  /* Remove any default Bootstrap focus shadows */
+}

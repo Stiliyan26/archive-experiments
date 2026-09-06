@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+		xmlns:xs="http://www.w3.org/2001/XMLSchema"
+		elementFormDefault="qualified"
+		attributeFormDefault="unqualified">
+	<!-- === Simple Types === -->
+	<xs:simpleType name="AlphaNumType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[0-9|A-Z|a-z|А-Я|а-я]+"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="AlphaNumIDType">
+		<xs:restriction base="AlphaNumType">
+			<xs:maxLength value="35"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="DateType">
+		<xs:restriction base="xs:date">
+			<xs:pattern value="[0-9]{4}-[0-9]{2}-[0-9]{2}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="InvoiceTypeCodeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="INV"/>
+			<xs:enumeration value="KTN"/>
+			<xs:enumeration value="DTN"/>
+			<xs:enumeration value="OTHER"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="InvoiceTypeTextType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="70"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="SDXTypeCodeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="SDX"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="SDXTypeTextType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="70"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Language Codes according to ISO 639-2 -->
+	<xs:simpleType name="LanguageType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="bul"/>
+			<xs:enumeration value="eng"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="authorizationIdType">
+		<xs:restriction base="xs:base64Binary"/>
+	</xs:simpleType>
+	<xs:simpleType name="authorizationKeyType">
+		<xs:restriction base="xs:base64Binary"/>
+	</xs:simpleType>
+	<xs:simpleType name="VATIdentificationNumberType">
+		<xs:restriction base="AlphaNumIDType"/>
+	</xs:simpleType>
+	<xs:simpleType name="IdentificationNumberType">
+		<xs:restriction base="AlphaNumIDType"/>
+	</xs:simpleType>
+	<xs:simpleType name="InvoiceNumberType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[0-9]{10}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="errTextType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="4000"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="StatusCodeType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[0-9]{1,4}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="StatusNameType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="70"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="PeriodTypeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="InvoiceSendDate"/>
+			<xs:enumeration value="InvoiceDate"/>
+			<xs:enumeration value="InvoiceDueDate"/>
+			<xs:enumeration value="InvoiceStatusChanged"/>
+			<xs:enumeration value="SDXDate"/>
+			<xs:enumeration value="SDXStatusChanged"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ResultCodeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="OK"/>
+			<xs:enumeration value="VOK"/>
+			<xs:enumeration value="NOK"/>
+			<xs:enumeration value="ERR"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="EmailType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="255"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

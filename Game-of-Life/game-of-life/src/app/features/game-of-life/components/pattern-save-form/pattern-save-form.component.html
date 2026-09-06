@@ -1,0 +1,37 @@
+<div class="pattern-save-form">
+  <label class="pattern-save-form__label" for="pattern-name">
+    Save current pattern
+  </label>
+
+  <div class="pattern-save-form__controls">
+    <input
+      id="pattern-name"
+      type="text"
+      class="pattern-save-form__input"
+      placeholder="Pattern name"
+      [value]="patternName()"
+      #patternNameInput
+      (input)="onInput(patternNameInput.value)"
+      maxlength="100"
+      autocomplete="off"
+    />
+
+    <button
+      type="button"
+      class="pattern-save-form__button"
+      [disabled]="!canSave() || isSaving()"
+      (click)="save()"
+    >
+      {{ isSaving() ? 'Saving…' : 'Save pattern' }}
+    </button>
+  </div>
+
+  @if (message()) {
+    <p
+      class="pattern-save-form__status"
+      [class.pattern-save-form__status--error]="statusIsError()"
+    >
+      {{ message() }}
+    </p>
+  }
+</div>

@@ -1,0 +1,8 @@
+.idea
+.project
+.settings
+.vscode
+frontend/package-lock.json
+frontend/node_local_install/
+backend/public/
+backend/target/

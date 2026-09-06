@@ -1,0 +1,38 @@
+<header class="status-bar" aria-label="Simulation status">
+  <div class="status-bar__stats">
+    <div class="status-bar__stat">
+      <span class="status-bar__stat-label">Generation</span>
+      <span class="status-bar__stat-value">{{ generation() }}</span>
+    </div>
+
+    <div class="status-bar__stat">
+      <span class="status-bar__stat-label">Status</span>
+      <span class="status-bar__stat-value">{{ statusText() }}</span>
+    </div>
+  </div>
+
+  <div class="status-bar__controls" role="group" aria-label="Simulation controls">
+    <button type="button" class="status-bar__button" (click)="toggle()">
+      {{ running() ? 'Pause' : 'Start' }}
+    </button>
+    
+    <button
+      type="button"
+      class="status-bar__button"
+      (click)="step()"
+      [disabled]="running()"
+    >
+      Step
+    </button>
+
+    <button
+      type="button"
+      class="status-bar__button status-bar__button--secondary"
+      (click)="randomize()"
+      [disabled]="running()"
+    >
+      Randomize
+    </button>
+  </div>
+</header>
+

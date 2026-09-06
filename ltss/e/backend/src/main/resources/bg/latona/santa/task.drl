@@ -1,0 +1,1110 @@
+package bg.latona.santa;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.allocation.*;
+import bg.latona.santa.entities.article.*;
+import bg.latona.santa.entities.asset.*;
+import bg.latona.santa.entities.employee.*;
+import bg.latona.santa.entities.invoice.*;
+import bg.latona.santa.entities.offer.*;
+import bg.latona.santa.entities.person.*;
+import bg.latona.santa.entities.security.*;
+import bg.latona.santa.entities.task.*;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global SecUser currentUser;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+
+//TODO forbid task related to itself
+
+
+rule ArticlePriceRateArticleNull 
+	salience -999
+when
+	$su: ArticlePriceRate(deleted == false && (article == null || article.deleted == true))
+then
+	warnings.rejectValue("ArticlePriceRate","article","notNull",null);
+end
+
+rule ArticlePriceRateCurrencyNull 
+	salience -999
+when
+	$su: ArticlePriceRate(deleted == false && (currency == null || currency.deleted == true))
+then
+	warnings.rejectValue("ArticlePriceRate","currency","notNull",null);
+end
+
+rule ArticlePriceRatePriceNull 
+	salience -999
+when
+	$su: ArticlePriceRate(deleted == false && (price == null || price == 0))
+then
+	warnings.rejectValue("ArticlePriceRate","price","notNull",null);
+end
+
+rule ArticlePriceRateValidFromDateNull 
+	salience -999
+when
+	$su: ArticlePriceRate(deleted == false && validFromDate == null)
+then
+	warnings.rejectValue("ArticlePriceRate","validFromDate","notNull",null);
+end
+
+rule ArticlePriceRateValidToDateNull 
+	salience -999
+when
+	$su: ArticlePriceRate(deleted == false && validToDate == null)
+then
+	warnings.rejectValue("ArticlePriceRate","validToDate","notNull",null);
+end
+
+
+rule TaskStatusDefault when
+	$t: Task(status == null && company != null)
+	$ts: TaskStatus() from droolsRuleProcedures.findTaskStatusByCodeAndCompany(TaskStatus.TASK_STATUS_PLANNED, $t.company)
+then
+	modify( $t ) {
+		setStatus( $ts );
+	}
+	warnings.add("Task.status default", false);
+end
+
+rule TaskTitleDefault when
+	$t: Task(title == null || title.length() == 0 || title.trim().isEmpty())
+then
+	modify( $t ) {
+		setTitle( "Задача" );
+	}
+	warnings.add("Task.title default", false);
+end
+
+rule TaskAssignedStatusValidation when
+	$t: Task(deleted == false && assigned == null, status != null, status.code != null, status.code.equals(TaskStatus.TASK_STATUS_ASSIGNED))
+then
+	warnings.rejectValue("Task","status","status.assignedWithoutUser",$t.getStatus());
+end
+
+
+/*
+rule LegalPersonNameNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (name == null || name.length()==0 || name.trim().isEmpty()))
+then
+	warnings.rejectValue("LegalPerson","name","notNull",$lp.getName());
+end
+
+rule LegalPersonEikOrEgnNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (eik == null || eik.length()==0), (egn == null || egn.length()==0))
+then
+	warnings.rejectValue("LegalPerson","eik","notNull",$lp.getEik());
+end
+
+rule LegalPersonCountryNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (country == null || country.length()==0 || country.trim().isEmpty()))
+then
+	warnings.rejectValue("LegalPerson","country","notNull",$lp.getCountry());
+end
+
+rule LegalPersonAddressNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (address == null || address.length()==0 || address.trim().isEmpty()))
+then
+	warnings.rejectValue("LegalPerson","address","notNull",$lp.getAddress());
+end
+
+rule LegalPersonMolNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (mol == null || mol.length()==0 || mol.trim().isEmpty()))
+then
+	warnings.rejectValue("LegalPerson","mol","notNull",$lp.getMol());
+end
+
+rule LegalPersonLegalStatusNotNull
+	salience -999
+when
+	$lp: LegalPerson(deleted == false && (legalStatus == null || legalStatus.deleted == true))
+then
+	warnings.rejectValue("LegalPerson","legalStatus","notNull",$lp.getLegalStatus());
+end
+*/
+
+rule LegalPersonFkInvoice
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Invoice(deleted == false) from $e.invoices
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkOfferToClient
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferToClient(deleted == false) from $e.offerToClients
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkContact
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Contact(deleted == false) from $e.contacts
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkCustomer
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkLegalPersonAttachment
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: LegalPersonAttachment(deleted == false) from $e.legalPersonAttachments
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkLegalPersonComment
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: LegalPersonComment(deleted == false) from $e.legalPersonComments
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkVendor
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Vendor(deleted == false) from $e.vendors
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkTask
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Task(deleted == false) from $e.tasks
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkTransport
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transports
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkTransportOrder
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrder(deleted == false) from $e.transportOrders
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkOrderOrdererTransportOrder
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrder(deleted == false) from $e.transportOrderOrderers
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkSenderTransportOrder
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrder(deleted == false) from $e.transportOrderSenders
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkImportedLegalPerson
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPerson(deleted == false) from $e.importedLegalPerson
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkImportedLegalPersonGroup
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedLegalPersonGroup(deleted == false) from $e.importedLegalPersonGroups
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkImportedSantaPartner
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedSantaPartner(deleted == false) from $e.importedSantaPartners
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkBankAccount
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: BankAccount(deleted == false) from $e.bankAccounts
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkExpenditure
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Expenditure(deleted == false) from $e.expenditures
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkIncome
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Income(deleted == false) from $e.incomes
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule CustomerDirectionNotNull
+	salience -999
+when
+	$lp: Customer(deleted == false && (direction == null || direction.deleted == true))
+then
+	warnings.rejectValue("Customer","direction","notNull",null);
+end
+
+rule CustomerAreaNotNull
+	salience -999
+when
+	$lp: Customer(deleted == false && (area == null || area.deleted == true))
+then
+	warnings.rejectValue("Customer","area","notNull",null);
+end
+
+rule CustomerBusinessNotNull
+	salience -999
+when
+	$lp: Customer(deleted == false && (business == null || business.deleted == true))
+then
+	warnings.rejectValue("Customer","business","notNull",null);
+end
+
+rule CustomerGeneralCategoryNotNull
+	salience -999
+when
+	$lp: Customer(deleted == false && (generalCategory == null || generalCategory.deleted == true))
+then
+	warnings.rejectValue("Customer","generalCategory","notNull",null);
+end
+
+rule OfferToClientRevisionDefault when
+	$oc: OfferToClient(deleted == false && (revision == null || revision == 0) && originalOffer == null)
+then
+	modify( $oc ) {
+		setRevision(1);
+	}
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.revision default", false);
+end
+
+rule OfferToClientOriginalOfferTraverseCheck when
+	$oc: OfferToClient(deleted == false && originalOffer != null, this == $oc.originalOffer)
+then
+	warnings.rejectValue("OfferToClient","originalOffer","originalOffer.cycle",null);
+end
+
+rule OfferToClientOriginalOfferTraverse when
+	$oc: OfferToClient(
+		originalOffer != null 
+		&& originalOffer.originalOffer != null 
+		&& originalOffer != originalOffer.originalOffer
+	)
+then
+	modify( $oc ) {
+		setOriginalOffer($oc.getOriginalOffer().getOriginalOffer());
+	}
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.originalOffer traverse", false);
+end
+
+rule OfferToClientFirstRevision when
+	$oc: OfferToClient((revision == null || revision == 0) && originalOffer != null && originalOffer.originalOffer == null)
+	not Integer() from accumulate(
+		OfferToClient($rev: revision) from droolsRuleProcedures.findOfferToClientByOriginalOffer($oc.originalOffer),
+		max($rev)
+	)
+then
+	modify( $oc ) {
+		setRevision(2);
+	}
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.revision 2", false);
+end
+
+rule OfferToClientNextRevisions when
+	$oc: OfferToClient((revision == null || revision == 0) && originalOffer != null && originalOffer.originalOffer == null)
+	accumulate(
+		OfferToClient($rev: revision) from droolsRuleProcedures.findOfferToClientByOriginalOffer($oc.originalOffer); 
+		$maxRev: max($rev)
+	)
+then
+	modify( $oc ) {
+		setRevision(((Number)$maxRev).intValue() + 1);
+	}
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.revision "+$oc.getRevision(), false);
+end
+
+rule OfferToClientOfferCodeDefault when
+	$oc: OfferToClient(id > 0 && (offerCode == null || offerCode.length() == 0) && createdDate != null && createdBy != null && revision > 0)
+then
+	OfferToClient originalOffer = $oc;
+	if($oc.getOriginalOffer() != null) {
+		originalOffer = $oc.getOriginalOffer();
+	}
+	Calendar createdDate = Calendar.getInstance();
+	createdDate.setTime(originalOffer.getCreatedDate());
+	$oc.setOfferCode(String.format(
+			"%02d%02d%02d%.2s%05d/%02d",
+			createdDate.get(Calendar.MONTH) + 1, //starts with 0 = JANUARY
+			createdDate.get(Calendar.DAY_OF_MONTH),
+			createdDate.get(Calendar.YEAR) % 100, //last 2 digits only
+			originalOffer.getCreatedBy().getCode(),
+			originalOffer.getId(),
+			$oc.getRevision()
+		));
+	update( $oc );
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.offerCode default", false);
+end
+
+rule OfferToClientNameDefault when
+	$oc: OfferToClient((name == null || name.length() == 0) && offerCode != null && offerCode.length() > 0 && person != null)
+then
+	modify( $oc ) {
+		setName("Оферта "+$oc.getOfferCode()+" към "+$oc.getPerson().getName());
+	}
+	entitiesToBeSaved.add( $oc );
+	warnings.add("OfferToClient.name default", false);
+end
+
+rule OfferToClientCurrencyNotNull
+	salience -999
+when
+	$lp: OfferToClient(deleted == false && (currency == null || currency.deleted == true))
+then
+	warnings.rejectValue("OfferToClient","currency","notNull",null);
+end
+
+rule OfferToClientPersonNotNull
+	salience -999
+when
+	$lp: OfferToClient(deleted == false && (person == null || person.deleted == true))
+then
+	warnings.rejectValue("OfferToClient","person","notNull",null);
+end
+
+rule OfferToClientVatPercentMax100
+when
+	$lp: OfferToClient(deleted == false && vatPercent != null, vatPercent > 100 || vatPercent < 0)
+then
+	warnings.rejectValue("OfferToClient","vatPercent","vatPercent.max100",$lp.getVatPercent());
+end
+
+rule OfferToClientDiscountPercentMax100
+when
+	$lp: OfferToClient(deleted == false && discountPercent != null, discountPercent > 100 || discountPercent < 0)
+then
+	warnings.rejectValue("OfferToClient","discountPercent","discountPercent.max100",$lp.getDiscountPercent());
+end
+
+rule OfferLineAmmountNull
+	salience -999
+when
+	$ol: OfferLine(deleted == false && ammount == null)
+then
+	warnings.rejectValue("OfferLine","ammount","notNull",null);
+end
+
+rule OfferLinePriceNull
+	salience -999
+when
+	$ol: OfferLine(deleted == false && price == null)
+then
+	warnings.rejectValue("OfferLine","price","notNull",null);
+end
+
+rule OfferLineDiscountPercentDefault
+when
+	$ol: OfferLine(discountPercent == null)
+then
+	modify( $ol ) {
+		setDiscountPercent(BigDecimal.ZERO);
+	}
+	entitiesToBeSaved.add($ol);
+	warnings.add("OfferLine.discountPercent default", false);
+end
+
+rule OfferLineDiscountPercentMax100
+when
+	$ol: OfferLine(deleted == false && discountPercent != null, discountPercent > 100 || discountPercent < 0)
+then
+	warnings.rejectValue("OfferLine","discountPercent","discountPercent.max100",$ol.getDiscountPercent());
+end
+
+
+//rules that generate new entities
+rule TaskWatcherAddCreator
+when
+	$t: Task(id > 0, createdBy != null, validationEvent.startsWith("after"))
+	not TaskWatcher() from droolsRuleProcedures.findTaskWatcherByTaskAndWatcher($t,$t.createdBy)
+then
+	TaskWatcher taskWatcher = new TaskWatcher(null, null, null, null, false, $t.getCompany(), $t, $t.getCreatedBy());
+	entitiesToBeSaved.add(taskWatcher);
+	insert( taskWatcher );
+	warnings.add("Add creator as task watcher", false);
+end
+
+
+//DELETE propagation rules
+
+rule DeleteOfferToClientPropagate
+when
+	$deleted: OfferToClient(validationEvent.startsWith("after") && deleted == true)
+then
+	for(OfferLine offerLine : $deleted.getOfferLines()) {
+		offerLine.setDeleted( true );
+		entitiesToBeSaved.add( offerLine );
+		insert( offerLine );
+	}
+end
+
+//Invoice
+rule InvoiceIsIssued when
+	$inv: Invoice(id > 0 && validationEvent.startsWith("before") )
+	$origInv: Invoice(deleted == false && isIssued == true) from cleanEmWrapper.getOriginalEntity($inv)
+then
+	if($origInv != null) {
+		$origInv.setIsExported(true); //only isExported is allowed to be set to true
+		if(!$inv.equals($origInv)) {
+			warnings.rejectValue($inv.getClass().getSimpleName(),"isIssued","invoiceNum.isIssued",$inv.getIsIssued());
+		}
+	}
+end
+
+rule InvoiceInvoiceNumAutoinc when
+	$inv: Invoice(isIssued == true && invoiceNum == null && validationEvent.startsWith("before"))
+then
+	BigDecimal maxNum = droolsRuleProcedures.getInvoiceMaxIssuedInvoiceNum();
+	BigDecimal newNum;
+	if(maxNum == null) {
+		newNum = BigDecimal.ONE;
+	} else {
+		newNum = maxNum.add(BigDecimal.ONE);
+	}
+	modify( $inv ) {
+		setInvoiceNum( newNum );
+	}
+	warnings.add($inv.getClass().getName()+".invoiceNum default", false);
+end
+
+rule InvoiceInvoiceNumNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && isIssued == true && invoiceNum == null && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceNum","notNull",null);
+end
+
+rule InvoiceInvoiceNumLast
+	salience -999
+when
+	$inv: Invoice(isIssued == true && invoiceNum != null && validationEvent.startsWith("before")
+				&& invoiceNum != droolsRuleProcedures.getInvoiceMaxIssuedInvoiceNum().add(BigDecimal.ONE) )
+	$origInv: Invoice(deleted == false && (isIssued != true || invoiceNum == null)) from cleanEmWrapper.getOriginalEntity($inv)
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceNum","invoiceNum.last",$inv.getInvoiceNum());
+end
+
+rule InvoiceInvoiceDateNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && invoiceDate == null && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceDate","notNull",null);
+end
+
+rule InvoiceInvoiceDescriptionNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (invoiceDescription == null || invoiceDescription.trim().isEmpty()) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceDescription","notNull",null);
+end
+
+rule InvoiceCounterPartyNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (invoiceCounterParty == null || invoiceCounterParty.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceCounterParty","notNull",null);
+end
+
+rule InvoicePaymentTypeNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (paymentType == null || paymentType.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"paymentType","notNull",null);
+end
+
+rule InvoiceBankAccountNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && bankAccount == null && paymentType != null && paymentType.listOptionItemCode == LoiPaymentType.PAYMENT_TYPE_WIRE_TRANSFER && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"bankAccount","notNull",null);
+end
+
+rule InvoiceVatExemptionReasonNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (vatExemptionReason == null || vatExemptionReason.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"vatExemptionReason","notNull",null);
+end
+
+rule InvoiceInvoiceCurrencyNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (invoiceCurrency == null || invoiceCurrency.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceCurrency","notNull",null);
+end
+
+rule InvoiceIssuedByDefault when
+	$inv: Invoice(issuedBy == null && validationEvent.startsWith("before"))
+then
+	modify( $inv ) {
+		setIssuedBy( currentUser );
+	}
+	warnings.add($inv.getClass().getName()+".issuedBy default", false);
+end
+
+rule InvoiceIssuedByReasonNull
+	salience -999
+when
+	$inv: Invoice(deleted == false && (issuedBy == null || issuedBy.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"issuedBy","notNull",null);
+end
+
+rule InvoiceInvoiceDateDefault when
+	$inv: Invoice(invoiceDate == null && validationEvent.startsWith("before"))
+then
+	modify( $inv ) {
+		setInvoiceDate( currentLocalDate );
+	}
+	warnings.add($inv.getClass().getName()+".invoiceDate default", false);
+end
+
+rule InvoiceInvoiceDateLatest
+	salience -999
+when
+	$inv: Invoice(isIssued == true 
+				&& invoiceDate != null 
+				&& invoiceDate < droolsRuleProcedures.getInvoiceMaxIssuedInvoiceDate()
+				&& validationEvent.startsWith("before"))
+	$origInv: Invoice(deleted == false && (isIssued != true || invoiceDate == null)) from cleanEmWrapper.getOriginalEntity($inv)
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceDate","invoiceDate.latest",$inv.getInvoiceDate());
+end
+
+rule InvoiceTaxBaseAmountFromInvoiceRow
+	salience 20 //before UpdateInvoiceTaxAmount
+when
+	$irow: InvoiceRow(quantity != null && quantity != 0 && priceRate != null && priceRate != 0 && invoice != null && validationEvent.startsWith("before"))
+	$inv: Invoice() from $irow.invoice
+	accumulate(
+		$rows: InvoiceRow($quantity: quantity, $priceRate: priceRate, quantity != null, priceRate != null, deleted != true, id != $irow.id) from $inv.invoiceRows; 
+		$sum: sum($quantity.multiply($priceRate).setScale(2, BigDecimal.ROUND_HALF_UP))
+	)
+then
+	BigDecimal newValue = $sum.add($irow.getQuantity().multiply($irow.getPriceRate()).setScale(2, BigDecimal.ROUND_HALF_UP));
+	if( $inv.getTaxBaseAmount() == null || $inv.getTaxBaseAmount().compareTo(newValue) != 0 ) {
+		insert( $inv );
+		modify( $inv ) {
+			setTaxBaseAmount( newValue );
+		}
+		entitiesToBeSaved.add( $inv );
+		warnings.add($inv.getClass().getName()+".taxBaseAmount default", false);
+	}
+end
+
+rule InvoiceTaxAmount
+	salience 10 //before UpdateInvoiceTotalAmountDefault
+when
+	$inv: Invoice(taxBaseAmount != null && validationEvent.startsWith("before"))
+then
+	BigDecimal taxRate = ($inv.getVatExemptionReason() != null && LoiVatExemptionReason.VAT_EXEMPTION_REASON_NONE == $inv.getVatExemptionReason().getListOptionItemCode() ? (new BigDecimal(0.2)) : (BigDecimal.ZERO));
+	BigDecimal newValue = taxRate.multiply($inv.getTaxBaseAmount()).setScale(2, BigDecimal.ROUND_HALF_UP);
+	if( $inv.getTaxAmount() == null || $inv.getTaxAmount().compareTo(newValue) != 0 ) {
+		modify( $inv ) {
+			setTaxAmount( newValue );
+		}
+		warnings.add($inv.getClass().getName()+".taxAmount default", false);
+	}
+end
+
+rule InvoiceTotalAmount
+	salience 0
+when
+	$inv: Invoice(taxBaseAmount != null && taxAmount != null && validationEvent.startsWith("before"))
+then
+	BigDecimal newValue = $inv.getTaxBaseAmount().add($inv.getTaxAmount());
+	if( $inv.getTotalAmount() == null || $inv.getTotalAmount().compareTo(newValue) != 0 ) {
+		modify( $inv ) {
+			setTotalAmount( newValue );
+		}
+		warnings.add($inv.getClass().getName()+".totalAmount default", false);
+	}
+end
+
+//InvoiceRow
+rule InvoiceRowInvoiceIsIssued when
+	$invRow: InvoiceRow(deleted == false && invoice != null && invoice.isIssued == true && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($invRow.getInvoice().getClass().getSimpleName(),"isIssued","invoiceNum.isIssued",$invRow.getInvoice().getIsIssued());
+end
+
+rule InvoiceRowDescriptionFromTransport
+when
+	$invRow: InvoiceRow(transport != null && validationEvent.startsWith("before"))
+then
+	InvoiceRow origRow = (InvoiceRow) cleanEmWrapper.getOriginalEntity($invRow);
+	if(origRow == null //row is created
+			|| origRow.getTransport() == null //row is assigned a transport
+			|| origRow.getTransport() != $invRow.getTransport() //row transport is changed
+	) {
+		String newValue = $invRow.getTransport().getRoute()
+				+" "+$invRow.getTransport().getContainerNumber()
+				+" "+($invRow.getTransport().getTractorUnit() != null ? $invRow.getTransport().getTractorUnit().getLicensePlate() : "")
+				+($invRow.getTransport().getTrailer() != null ? "/"+$invRow.getTransport().getTrailer().getLicensePlate() : "");
+		if($invRow.getInvoiceRowDescription() != newValue) {
+			modify( $invRow ) {
+				setInvoiceRowDescription( newValue );
+			}
+			warnings.add($invRow.getClass().getName()+".invoiceRowDescription default", false);
+		}
+	}
+end
+
+rule InvoiceRowPriceRateFromTransport
+when
+	$invRow: InvoiceRow(transport != null && validationEvent.startsWith("before"))
+then
+	InvoiceRow origRow = (InvoiceRow) cleanEmWrapper.getOriginalEntity($invRow);
+	if(origRow == null //row is created
+			|| origRow.getTransport() == null //row is assigned a transport
+			|| origRow.getTransport() != $invRow.getTransport() //row transport is changed
+			|| $invRow.getPriceRate() != $invRow.getTransport().getPaymentAmount() //value is different
+	) {
+		modify( $invRow ) {
+			setPriceRate($invRow.getTransport().getPaymentAmount());
+		}
+		warnings.add($invRow.getClass().getName()+".priceRate from transport", false);
+	}
+end
+
+rule InvoiceRowQuantityDefault
+when
+	$invRow: InvoiceRow(quantity == null && validationEvent.startsWith("before"))
+then
+	BigDecimal defaultValue = BigDecimal.ONE;
+	modify( $invRow ) {
+		setQuantity(defaultValue);
+	}
+	warnings.add($invRow.getClass().getName()+".quantity default", false);
+end
+
+rule InvoiceRowPriceRateNull
+	salience -999
+when
+	$inv: InvoiceRow(deleted == false && priceRate == null && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"priceRate","notNull",null);
+end
+
+rule InvoiceRowDescriptionNull
+	salience -999
+when
+	$inv: InvoiceRow(deleted == false && (invoiceRowDescription == null || invoiceRowDescription.trim().isEmpty()) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoiceRowDescription","notNull",null);
+end
+
+rule InvoiceRowArticleNull
+	salience -999
+when
+	$inv: InvoiceRow(deleted == false && (article == null || article.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"article","notNull",null);
+end
+
+rule InvoiceRowInvoiceNull
+	salience -999
+when
+	$inv: InvoiceRow(deleted == false && (invoice == null || invoice.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($inv.getClass().getSimpleName(),"invoice","notNull",null);
+end
+
+
+/*
+rule AllocationRecordFromTaskAttachment
+when
+	$ta: TaskAttachment(attachment != null && task != null && company != null && validationEvent.startsWith("before"))
+	not AllocationRecord(allocationProducer != null && allocationProducer == $ta.attachment 
+		&& allocationConsumer != null && allocationConsumer == $ta.task)
+	$are: AttachableRevenuesAndExpenses(ammount != null) from $ta.attachment.attachableRevenuesAndExpenses
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerAndConsumerAndCompanyAndDeleted("expenditures","transports", $ta.company, false)
+then
+	AllocationRecord newRecord = new AllocationRecord(null,null,null,null, false, $ta.getCompany(),
+		$at, $are.getAmmount(), $ta.getTask(), $are);
+	entitiesToBeSaved.add(newRecord);
+	insert( newRecord );
+	warnings.add("TaskAttachment automatic create AllocationRecord: "+$ta.getId(), false);
+end
+
+rule AllocationRecordFromAssetAttachment
+when
+	$aa: AssetAttachment(attachmentToAsset != null && asset != null && company != null && validationEvent.startsWith("before"))
+	not AllocationRecord(allocationProducer != null && allocationProducer == $aa.attachmentToAsset 
+		&& allocationConsumer != null && allocationConsumer == $aa.asset)
+	$are: AttachableRevenuesAndExpenses(ammount != null) from $aa.attachmentToAsset.attachableRevenuesAndExpenses
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerAndConsumerAndCompanyAndDeleted("expenditures","vehicles", $aa.company, false)
+then
+	AllocationRecord newRecord = new AllocationRecord(null,null,null,null, false, $aa.getCompany(),
+		$at, $are.getAmmount(), $aa.getAsset(), $are);
+	entitiesToBeSaved.add(newRecord);
+	insert( newRecord );
+	warnings.add("AssetAttachment automatic create AllocationRecord: "+$aa.getId(), false);
+end
+
+rule AllocationRecordFromEmployeeAttachment
+when
+	$ea: EmployeeAttachment(attachmentToEmployee != null && employee != null && company != null && validationEvent.startsWith("before"))
+	not AllocationRecord(allocationProducer != null && allocationProducer == $ea.attachmentToEmployee 
+		&& allocationConsumer != null && allocationConsumer == $ea.employee)
+	$are: AttachableRevenuesAndExpenses(ammount != null) from $ea.attachmentToEmployee.attachableRevenuesAndExpenses
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerAndConsumerAndCompanyAndDeleted("expenditures","employees", $ea.company, false)
+then
+	AllocationRecord newRecord = new AllocationRecord(null,null,null,null, false, $ea.getCompany(),
+		$at, $are.getAmmount(), $ea.getEmployee(), $are);
+	entitiesToBeSaved.add(newRecord);
+	insert( newRecord );
+	warnings.add("EmployeeAttachment automatic create AllocationRecord: "+$ea.getId(), false);
+end
+*/
+
+rule EmployeeEmployeeNameNull 
+	salience -999
+when
+	$su: Employee(deleted == false && (employeeName == null || employeeName.trim().isEmpty()))
+then
+	warnings.rejectValue("Employee","employeeName","notNull",null);
+end
+
+rule EmployeeEmployeeEgnNull 
+	salience -999
+when
+	$su: Employee(deleted == false && (employeeEgn == null || employeeEgn.trim().isEmpty()))
+then
+	warnings.rejectValue("Employee","employeeEgn","notNull",null);
+end
+
+
+rule ExpenditureExpenseTypeNull 
+	salience -999
+when
+	$su: Expenditure(deleted == false && (expenseType == null || expenseType.deleted == true))
+then
+	warnings.rejectValue("Expenditure","expenseType","notNull",null);
+end
+
+rule ExpenditureExpenseDescNull 
+	salience -999
+when
+	$su: Expenditure(deleted == false && (expenseDesc == null || expenseDesc.trim().isEmpty()))
+then
+	warnings.rejectValue("Expenditure","expenseDesc","notNull",null);
+end
+
+rule ExpenditureExpenseDateNull 
+	salience -999
+when
+	$su: Expenditure(deleted == false && expenseDate == null)
+then
+	warnings.rejectValue("Expenditure","expenseDate","notNull",null);
+end
+
+rule ExpenditureNameNull 
+	salience -999
+when
+	$su: Expenditure(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("Expenditure","name","notNull",null);
+end
+
+rule TaskFkComment
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Comment(deleted == false) from $e.comments
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkPlannedIncomeOrExpense
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PlannedIncomeOrExpense(deleted == false) from $e.plannedIncomeOrExpenses
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkPlannedTime
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PlannedTime(deleted == false) from $e.plannedTimes
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkPlannedTime
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PlannedTime(deleted == false) from $e.plannedTimes
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskStatusFkTask
+	salience -999
+when
+	$e: TaskStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Task(deleted == false) from $e.tasks
+then
+	warnings.rejectValue("TaskStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskTypeFkTask
+	salience -999
+when
+	$e: TaskType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Task(deleted == false) from $e.tasks
+then
+	warnings.rejectValue("TaskType","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskPriorityFkTask
+	salience -999
+when
+	$e: TaskPriority(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Task(deleted == false) from $e.tasks
+then
+	warnings.rejectValue("TaskPriority","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkTask
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Task(deleted == false) from $e.assignedTasks
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTaskAttachment
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskAttachment(deleted == false) from $e.taskAttachments
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule AttachableFkTaskAttachment
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskAttachment(deleted == false) from $e.taskAttachments
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskRelationTypeFkTaskRelation
+	salience -999
+when
+	$e: TaskRelationType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskRelation(deleted == false) from $e.taskRelations
+then
+	warnings.rejectValue("TaskRelationType","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTaskRelationToTask
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskRelation(deleted == false) from $e.relationsToTask
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTaskRelationFromTask
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskRelation(deleted == false) from $e.relationsFromTask
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTaskRequiredAttachment
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskRequiredAttachment(deleted == false) from $e.requiredAttachments
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule AttachableFkTaskRequiredAttachment
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskRequiredAttachment(deleted == false) from $e.taskRequiredAttachments
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTaskWatcher
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskWatcher(deleted == false) from $e.watchers
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkTaskWatcher
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TaskWatcher(deleted == false) from $e.taskWatchers
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkTimeChargeRate
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeChargeRate(deleted == false) from $e.timeChargeRates
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkProviderTimeChargeRate
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeChargeRate(deleted == false) from $e.timeChargeRateProviders
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkProviderTimeChargeRate
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeChargeRate(deleted == false) from $e.timeChargeRates
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkTimeSheetItem
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeSheetItem(deleted == false) from $e.timeSheetItems
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule TaskFkTimeSheetItem
+	salience -999
+when
+	$e: Task(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeSheetItem(deleted == false) from $e.timeSheetItems
+then
+	warnings.rejectValue("Task","deleted","fkDenyDelete",$fk);
+end
+
+rule TimeSheetItemTypeFkTimeSheetItem
+	salience -999
+when
+	$e: TimeSheetItemType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TimeSheetItem(deleted == false) from $e.timeSheetItems
+then
+	warnings.rejectValue("TimeSheetItemType","deleted","fkDenyDelete",$fk);
+end
+
+

@@ -1,0 +1,82 @@
+#import new certificate
+keytool -delete -keystore keystore.p12 -alias santa_crm
+keytool -import -keystore keystore.p12 -alias santa_crm -file santa_crm.crt
+#test certificate (for Gaya)
+keytool -delete -keystore keystore.p12 -alias santa_crm
+openssl pkcs12 -export -in certificate.crt -inkey private.key -name santa_crm -out santa-PKCS-12.p12
+keytool -importkeystore -destkeystore keystore.p12 -srckeystore santa-PKCS-12.p12 -srcstoretype PKCS12 -alias santa_crm
+cp keystore.p12 ../src/main/resources/
+
+#for Camel on server: provide the new certificate for importing in the server keystore done in Docker
+cp certificate.crt ./docker/backend/santa_crm.crt
+#for Camel local create self-signed certificate for HTTPS
+keytool -genkey -alias santa_crm -dname "CN=CRM, OU=Unknown, O=Latona, L=Sofia, ST=Unknown, C=BG" -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore_local.p12 -validity 3650 -ext "SAN:c=DNS:localhost,IP:127.0.0.1"
+cp keystore_local.p12 ../src/main/resources/keystore.p12
+keytool -export -keystore keystore_local.p12 -alias santa_crm -file certificate_local.crt
+##Linux
+sudo keytool -delete -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -alias santa_crm
+sudo keytool -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias santa_crm -file certificate_local.crt
+sudo keytool -delete -keystore /etc/ssl/certs/java/cacerts -storepass changeit -alias santa_crm
+sudo keytool -keystore /etc/ssl/certs/java/cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias santa_crm -file certificate_local.crt
+##Windows (run PS as admin)
+keytool -delete -keystore $env:JAVA_HOME/jre/lib/security/cacerts -storepass changeit -alias santa_crm
+keytool -keystore $env:JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias santa_crm -file certificate_local.crt
+Import-Certificate -FilePath "certificate_local.crt" -CertStoreLocation cert:\CurrentUser\Root
+
+#get certificate from server
+scp -i ~/.ssh/id_scripts_rsa -r angelvel@services.latona.eu:/home/angelvel/services_key.pem .
+scp -i ~/.ssh/id_scripts_rsa -r angelvel@services.latona.eu:/home/angelvel/services_cert.pem .
+#import new certificate
+#key store pass: OMS!c3r7@2021
+#cp keystore.p12 keystore_prod.p12
+keytool -delete -keystore keystore_prod.p12 -alias santa_crm
+#use same password as for the keystore!!!!!
+openssl pkcs12 -export -in services_cert.pem -inkey services_key.pem -name santa_crm -out santa-PKCS-12_prod.p12
+keytool -importkeystore -destkeystore keystore_prod.p12 -srckeystore santa-PKCS-12_prod.p12 -srcstoretype PKCS12 -alias santa_crm
+cp keystore_prod.p12 ../src/main/resources/keystore.p12
+cp certificate.crt ./docker/backend/santa_crm.crt
+
+#to verify Gaia domain for certificate issue
+scp -i ~/.ssh/id_rsa -r C:\Users\Angel\Downloads\Admin\F851CF7D0E31A15017EAA7E2F734779E.txt angelvel@37.157.143.162:/home/angelvel/static/.well-known/pki-validation/
+docker run -v /home/angelvel/static/:/web -p 8080:8080 halverneus/static-file-server:latest
+
+#get Gaya cert from download from ZeroSSL
+#key store pass: OMS!c3r7@2021
+#import new certificate
+keytool -delete -keystore keystore.p12 -alias santa_crm
+#use same password as for the keystore!!!!!
+openssl pkcs12 -export -in certificate.crt -inkey private.key -name santa_crm -out santa-PKCS-12.p12
+keytool -importkeystore -destkeystore keystore.p12 -srckeystore santa-PKCS-12.p12 -srcstoretype PKCS12 -alias santa_crm
+cp keystore.p12 ../src/main/resources/keystore.p12
+
+
+
+#get OnlineMashini cert from download from ZeroSSL
+#key store pass: OMS!c3r7@2021
+#import new certificate
+keytool -delete -keystore keystore_om.p12 -alias santa_crm
+#use same password as for the keystore!!!!!
+openssl pkcs12 -export -in certificate.crt -inkey private.key -name santa_crm -out santa-PKCS-12.p12
+keytool -importkeystore -destkeystore keystore_om.p12 -srckeystore santa-PKCS-12.p12 -srcstoretype PKCS12 -alias santa_crm
+
+#get NEPAL cert from download from ZeroSSL
+#key store pass: OMS!c3r7@2021
+#import new certificate
+keytool -delete -keystore keystore_nepal.p12 -alias santa_crm
+#use same password as for the keystore!!!!!
+cp C:\Users\Angel\Downloads\Admin/51.68.172.237/certificate.crt ./certificate_nepal.crt
+openssl pkcs12 -export -in C:\Users\Angel\Downloads\Admin/51.68.172.237/certificate.crt -inkey C:\Users\Angel\Downloads\Admin/51.68.172.237/private.key -name santa_crm -out santa-PKCS-12_nepal.p12
+keytool -importkeystore -destkeystore keystore_nepal.p12 -srckeystore santa-PKCS-12_nepal.p12 -srcstoretype PKCS12 -alias santa_crm
+
+#get Selfie cert from download from ZeroSSL
+#key store pass: OMS!c3r7@2021
+#import new certificate
+keytool -delete -keystore keystore.p12 -alias santa_crm
+#use same password as for the keystore!!!!!
+openssl pkcs12 -in C:\Users\Redzhep\Downloads\selfinvoce01.pfx -nocerts -out C:\Users\Redzhep\Downloads\private.key -nodes
+openssl pkcs12 -in C:\Users\Redzhep\Downloads\selfinvoce01.pfx -clcerts -nokeys -out C:\Users\Redzhep\Downloads\certificate.crt
+openssl pkcs12 -export -inkey C:\Users\Redzhep\Downloads\private.key -in C:\Users\Redzhep\Downloads\certificate.crt -out C:\Users\Redzhep\Downloads\keystore.p12 -name "santa_crm"
+#Next step require keytool of Java 11+
+"C:\Program Files\Java\jdk-18.0.1.1\bin\keytool.exe" -export -keystore C:\Users\Redzhep\Downloads\keystore.p12 -alias santa_crm -file santa_crm.crt
+
+

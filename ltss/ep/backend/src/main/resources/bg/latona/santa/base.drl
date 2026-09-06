@@ -1,0 +1,420 @@
+package bg.latona.santa;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.security.*;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global SecUser currentUser;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+
+
+rule CommonRecordCalculateOnlyFail
+	salience -9999
+when
+	$cr: CommonRecord(calculateOnly == true)
+then
+	warnings.rejectValue("CommonRecord","calculateOnly","calculateOnly.calculateOnly",$cr);
+end
+
+rule CommonRecordCreatedDateDefault 
+	salience 999
+when
+	$cr: CommonRecord(createdDate == null || id == null && createdDate != currentDate)
+then
+	modify( $cr ) {
+		setCreatedDate( currentDate );
+	}
+	warnings.add($cr.getClass().getName()+".createdDate default", false);
+end
+
+rule CommonRecordCreatedByDefault 
+	salience 999
+when
+	$cr: CommonRecord(createdBy == null || id == null && createdBy != currentUser)
+then
+	modify( $cr ) {
+		setCreatedBy( currentUser );
+	}
+	warnings.add($cr.getClass().getName()+".createdBy default", false);
+end
+
+rule CommonRecordLastModifiedDateDefault 
+	salience 999
+when
+	$cr: CommonRecord(validationEvent.startsWith("before"))
+then
+	modify( $cr ) {
+		setLastModifiedDate( currentDate );
+	}
+	//warnings.add($cr.getClass().getName()+".lastModifiedDate default", false);
+end
+
+rule CommonRecordLastModifiedByDefault 
+	salience 999
+when
+	$cr: CommonRecord(validationEvent.startsWith("before"))
+then
+	modify( $cr ) {
+		setLastModifiedBy( currentUser );
+	}
+	//warnings.add($cr.getClass().getName()+".lastModifiedBy default", false);
+end
+
+//deleted flag is set only in the "after" events, so here we try to cover it for the "before" events
+rule CompanyRecordDeletedSet 
+	salience 999
+when
+	$cr: CompanyRecord(deleted == false && id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete"))
+then
+	modify( $cr ) {
+		setDeleted( true );
+	}
+	warnings.add($cr.getClass().getName()+".deleted", true);
+end
+
+
+rule CompanyRecordCompanyDefault 
+	salience 999
+when
+	$cr: CompanyRecord(company == null)
+then
+	modify( $cr ) {
+		setCompany( currentUser.getCompany() );
+	}
+	warnings.add($cr.getClass().getName()+".company "+currentUser.getCompany().getName()+" of user "+currentUser.getName(), false);
+end
+
+
+rule SecUserNameNull 
+	salience -999
+when
+	$su: SecUser(deleted == false && (name == null || name.length() == 0 || name.trim().isEmpty()))
+then
+	warnings.rejectValue("SecUser","name","name.notNull",null);
+end
+
+
+//TODO Do we need to check the working memory for uniqueness too?
+//UNIQUE check rules
+rule UniqueCommonRecord
+	salience -999
+when
+	$new: CommonRecord(deleted == false)
+	$old: CommonRecord(id != $new.id) from droolsRuleProcedures.checkForUniqueCommonRecord($new, false)
+then
+	warnings.rejectValue($new.getClass().getSimpleName(),"uniqueness","notUnique",$old);
+end
+
+rule UniqueCommonRecordUndelete
+	salience -999
+when
+	$new: CommonRecord(id == null)
+	$old: CommonRecord() from droolsRuleProcedures.checkForUniqueCommonRecord($new, true)
+then
+	$new.setId($old.getId());
+	warnings.add("Undeleting "+$new.getClass().getSimpleName()+" with id: "+$old.getId(), false);
+end
+
+//rule UniqueCommonRecordRejectUpdate
+//	salience -999
+//when
+//	$new: CommonRecord(id != null)
+//	$old: CommonRecord(id != $new.id) from droolsRuleProcedures.checkForUniqueCommonRecord($new, true)
+//then
+//	$new.setId($old.getId());
+//	warnings.rejectValue($new.getClass().getSimpleName(),"uniqueness","notUnique",$old);
+//end
+
+//Allocation
+rule AllocationRecordAllocationConsumerNull
+	salience -999
+when
+	$e: AllocationRecord(deleted == false && allocationConsumer == null && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($e.getClass().getSimpleName(),"allocationConsumer","notNull",null);
+end
+
+rule AllocationRecordAllocationProducerNull
+	salience -999
+when
+	$e: AllocationRecord(deleted == false && (allocationProducer == null || allocationProducer.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($e.getClass().getSimpleName(),"allocationProducer","notNull",null);
+end
+
+rule AllocationTypeFkAllocationProxy
+	salience -999
+when
+	$e: AllocationType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AllocationProxy(deleted == false) from $e.allocationProxies
+then
+	warnings.rejectValue("AllocationType","deleted","fkDenyDelete",$fk);
+end
+
+rule AllocationOriginFkAllocationProxy
+	salience -999
+when
+	$e: AllocationOrigin(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AllocationProxy(deleted == false) from $e.allocationProxies
+then
+	warnings.rejectValue("AllocationOrigin","deleted","fkDenyDelete",$fk);
+end
+
+rule AllocationProxyFkConsumerAllocationRecord
+	salience -999
+when
+	$e: AllocationProxy(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AllocationRecord(deleted == false) from $e.consumerAllocationRecords
+then
+	warnings.rejectValue("AllocationProxy","deleted","fkDenyDelete",$fk);
+end
+
+rule AllocationProxyFkProducerAllocationRecord
+	salience -999
+when
+	$e: AllocationProxy(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AllocationRecord(deleted == false) from $e.producerAllocationRecords
+then
+	warnings.rejectValue("AllocationProxy","deleted","fkDenyDelete",$fk);
+end
+
+rule AllocationRecordUpdateAllocationProxy
+	salience 999
+when
+	$e: AllocationRecord( allocatedQuantity != null )
+	accumulate(
+		//$ar: AllocationRecord( deleted == false, allocationConsumer == $e.allocationConsumer, $cId: id, $cQty: allocatedQuantity );
+		$ar: AllocationRecord( deleted == false, allocationConsumer.id == $e.allocationConsumer.id, $cQty: allocatedQuantity );
+		$sumConsumerQuantityCreated: sum( $cQty ),
+		$consumerARInMemory: collectSet( $ar )
+	)
+	accumulate(
+		//$ar: AllocationRecord( id not memberOf $consumerARInMemory && deleted == false, $cQty: allocatedQuantity ) from $e.allocationConsumer.consumerAllocationRecords;
+		$ar: AllocationRecord( $ar not memberOf $consumerARInMemory && deleted == false, $cQty: allocatedQuantity ) from droolsRuleProcedures.findAllocationRecordByAllocationConsumerAndCompanyAndDeleted($e.allocationConsumer, $e.company, false);
+		$sumConsumerQuantity: sum( $cQty )
+	)
+	accumulate(
+		//$arp: AllocationRecord( deleted == false, allocationProducer == $e.allocationProducer, $pId: id, $pQty: allocatedQuantity );
+		$arp: AllocationRecord( deleted == false, allocationProducer.id == $e.allocationProducer.id, $pQty: allocatedQuantity );
+		$sumProducerQuantityCreated: sum( $pQty ),
+		$producerARInMemory: collectSet( $arp )
+	)
+	accumulate(
+		//$arp: AllocationRecord( id not memberOf $producerARInMemory && deleted == false, $pQty: allocatedQuantity ) from $e.allocationProducer.producerAllocationRecords;
+		$arp: AllocationRecord( $arp not memberOf $producerARInMemory && deleted == false, $pQty: allocatedQuantity ) from droolsRuleProcedures.findAllocationRecordByAllocationConsumerAndCompanyAndDeleted($e.allocationProducer, $e.company, false);
+		$sumProducerQuantity: sum( $pQty )
+	)
+then
+	//System.out.println("AllocationRecordUpdateAllocationProxy sumConsumerQuantityCreated: "+$consumerARInMemory.size()+" "+$sumConsumerQuantityCreated+", sumConsumerQuantity: "+$sumConsumerQuantity+", sumProducerQuantityCreated: "+$producerARInMemory.size()+" "+$sumProducerQuantityCreated+", sumProducerQuantity: "+$sumProducerQuantity);
+	BigDecimal newConsumerTotalAllocatedQuantity = $sumConsumerQuantity.add( $sumConsumerQuantityCreated );
+	BigDecimal newProducerTotalAllocatedQuantity = $sumProducerQuantity.add( $sumProducerQuantityCreated );
+	
+	if( $e.getAllocationConsumer().getTotalAllocatedQuantity().compareTo( newConsumerTotalAllocatedQuantity ) != 0 ) {
+		insert( $e.getAllocationConsumer() );
+		if( $e.getAllocationConsumer().getQuantityToAllocate().compareTo(BigDecimal.ZERO) < 0 ) {
+			modify( $e.getAllocationConsumer() ) {
+				setTotalAllocatedQuantity( newConsumerTotalAllocatedQuantity )
+			}
+		} else {
+			Boolean newFullyAllocated = ( newConsumerTotalAllocatedQuantity.compareTo( $e.getAllocationConsumer().getQuantityToAllocate() ) == 0 );
+			modify( $e.getAllocationConsumer() ) {
+				setTotalAllocatedQuantity( newConsumerTotalAllocatedQuantity ),
+				setFullyAllocated( newFullyAllocated )
+			}
+		}
+		entitiesToBeSaved.add( $e.getAllocationConsumer() );
+	}
+
+	if( $e.getAllocationProducer().getTotalAllocatedQuantity().compareTo( newProducerTotalAllocatedQuantity ) != 0 ) {
+		insert( $e.getAllocationProducer() );
+		if( $e.getAllocationProducer().getQuantityToAllocate().compareTo(BigDecimal.ZERO) < 0 ) {
+			modify( $e.getAllocationProducer() ) {
+				setTotalAllocatedQuantity( newProducerTotalAllocatedQuantity )
+			}
+		} else {
+			Boolean newFullyAllocated = ( newProducerTotalAllocatedQuantity.compareTo( $e.getAllocationProducer().getQuantityToAllocate() ) == 0 );
+			modify( $e.getAllocationProducer() ) {
+				setTotalAllocatedQuantity( newProducerTotalAllocatedQuantity ),
+				setFullyAllocated( newFullyAllocated )
+			}
+		}
+		entitiesToBeSaved.add( $e.getAllocationProducer() );
+	}
+end
+
+rule AllocationProxyUpdateConsumerAllocationRecordDelete
+	salience 999
+when 
+	$e: AllocationProxy(validationEvent.startsWith("before"))
+	$old: AllocationProxy(quantityToAllocate != $e.quantityToAllocate || allocationType != $e.allocationType || (deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))) from cleanEmWrapper.getOriginalEntity($e)
+	$ar: AllocationRecord(deleted == false) from $e.consumerAllocationRecords
+then
+	insert( $ar );
+	modify( $ar ){
+		setDeleted( true )
+	}
+	entitiesToBeSaved.add( $ar );
+end
+
+rule AllocationProxyUpdateProducerAllocationRecordDelete
+	salience 999
+when 
+	$e: AllocationProxy(validationEvent.startsWith("before"))
+	$old: AllocationProxy(quantityToAllocate != $e.quantityToAllocate || allocationType != $e.allocationType || (deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))) from cleanEmWrapper.getOriginalEntity($e)
+	$ar: AllocationRecord(deleted == false) from $e.producerAllocationRecords
+then
+	insert( $ar );
+	modify( $ar ){
+		setDeleted( true )
+	}
+	entitiesToBeSaved.add( $ar );
+end
+
+
+rule AllocationOriginCreateAllocationProxy
+	salience 999
+when
+	$e: AllocationOrigin(company != null && deleted == false && validationEvent.startsWith("after"))
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerClassOrConsumerClassAndCompanyAndDeleted($e.getClass(), $e.company, false)
+	not AllocationProxy() from droolsRuleProcedures.findAllocationProxyByAllocationOriginAndAllocationTypeAndCompanyAndDeleted( $e, $at, $e.company, false)
+then
+	AllocationProxy ap = new AllocationProxy(null, null, null, null, false, $e.getCompany(),
+			$e, $at, $e.getQuantityToAllocate(), BigDecimal.ZERO, false);
+	ap = (AllocationProxy) droolsRuleProcedures.save(ap); //save immediately to avoid the TransientObjectException
+	insert( ap );
+	//entitiesToBeSaved.add( ap );
+end
+
+rule AllocationOriginUpdateAllocationProxy
+	salience 999
+when
+	$e: AllocationOrigin(id != null && company != null && deleted == false && validationEvent.startsWith("before"))
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerClassOrConsumerClassAndCompanyAndDeleted($e.getClass(), $e.company, false)
+	$ap: AllocationProxy(quantityToAllocate != $e.getQuantityToAllocate()) from droolsRuleProcedures.findAllocationProxyByAllocationOriginAndAllocationTypeAndCompanyAndDeleted( $e, $at, $e.company, false)
+then
+	insert( $ap );
+	modify( $ap ){
+		setQuantityToAllocate( $e.getQuantityToAllocate() )
+	}
+	entitiesToBeSaved.add( $ap );
+end
+
+rule AllocationOriginDeleteFkAllocationProxy
+	salience 999
+when
+	$e: AllocationOrigin(company != null && (deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete"))))
+	$at: AllocationType() from droolsRuleProcedures.findAllocationTypeByProducerClassOrConsumerClassAndCompanyAndDeleted($e.getClass(), $e.company, false)
+	$ap: AllocationProxy() from droolsRuleProcedures.findAllocationProxyByAllocationOriginAndAllocationTypeAndCompanyAndDeleted( $e, $at, $e.company, false)
+then
+	insert( $ap );
+	modify( $ap ){
+		setDeleted( true )
+	}
+	entitiesToBeSaved.add( $ap );
+end
+
+
+rule SecUserFkAccessControl
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AccessControl(deleted == false) from $e.accessControls
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+
+rule SecRolePermissionRoleNull
+	salience -999
+when
+	$e: SecRolePermission(deleted == false && (role == null || role.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($e.getClass().getSimpleName(),"role","notNull",null);
+end
+
+rule SecRoleFkSecRolePermission
+	salience -999
+when
+	$e: SecRole(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: SecRolePermission(deleted == false) from $e.permissions
+then
+	warnings.rejectValue("SecRole","deleted","fkDenyDelete",$fk);
+end
+
+rule SecRolePermissionPermissionNull
+	salience -999
+when
+	$e: SecRolePermission(deleted == false && (permission == null || permission.deleted == true) && validationEvent.startsWith("before"))
+then
+	warnings.rejectValue($e.getClass().getSimpleName(),"permission","notNull",null);
+end
+
+rule SecPermissionFkSecRolePermission
+	salience -999
+when
+	$e: SecPermission(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: SecRolePermission(deleted == false) from $e.secRolePermissions
+then
+	warnings.rejectValue("SecPermission","deleted","fkDenyDelete",$fk);
+end
+
+
+rule SecUserFkSecUserRole
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: SecUserRole(deleted == false) from $e.roles
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkCCcPartner
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: CCcPartner(deleted == false) from $e.cCcPartners
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule SecRoleFkSecUserRole
+	salience -999
+when
+	$e: SecRole(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: SecUserRole(deleted == false) from $e.secUserRoles
+then
+	warnings.rejectValue("SecRole","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiExpenditureTypeFkExpenditure
+	salience -999
+when
+	$e: LoiExpenditureType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Expenditure(deleted == false) from $e.expenditures
+then
+	warnings.rejectValue("LoiExpenditureType","deleted","fkDenyDelete",$fk);
+end
+
+//Events
+rule EventAddToQueue
+when
+	$e: UserActionEvent( queuedTime == null && validationEvent.startsWith("afterCreate") )
+then
+	camelContext.createProducerTemplate().asyncSendBody("direct:"+$e.getClass().getSimpleName(), $e );
+	modify( $e ) {
+		setQueuedTime( ZonedDateTime.now() );
+	}
+end

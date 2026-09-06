@@ -1,0 +1,34 @@
+version: '2'
+
+services:
+
+  transport_postgres:
+    build: ./postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PGang.12
+    networks:
+      net_transport_db:
+        aliases:
+          - santa_crm_db
+
+  transport_backend:
+    build: ./backend
+    restart: always
+    ports:
+      - 42443:8443
+    depends_on:
+      - transport_postgres
+    networks:
+      net_transport_db:
+        aliases:
+          - santa_crm_backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+networks:
+  net_transport_db:

@@ -1,0 +1,17 @@
+<section class="page" aria-live="polite">
+  <app-game-status-bar />
+
+  <section class="pattern-panel" aria-label="Pattern management">
+    <app-pattern-select />
+
+    @if (!running()) {
+      <app-pattern-save-form />
+    } @else {
+      <p class="pattern-panel__hint">
+        Pause the simulation to name and save the current grid.
+      </p>
+    }
+  </section>
+
+  <app-life-grid [board]="board()"></app-life-grid>
+</section>

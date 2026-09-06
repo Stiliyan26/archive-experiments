@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: santa
+Bundle-SymbolicName: nepal
+Bundle-Version: 1.0.0.qualifier
+Export-Package: bg.latona.santa,
+ bg.latona.santa.entities,
+ bg.latona.santa.reports,
+ bg.latona.santa.repositories,
+ bg.latona.santa.security

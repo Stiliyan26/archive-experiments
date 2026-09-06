@@ -1,0 +1,231 @@
+/* :mainContainer {
+    --grid-column-size: 1fr;
+} */
+
+
+.mainContainer {
+    position: relative;
+    height: 300px;
+    width: 350px;
+}
+
+.customCard {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: all 0.7s ease;
+}
+
+.mainContainer:hover .customCard {
+    transform: rotateY(180deg);
+}
+
+.frontCard {
+    border-width: 2px;
+    /* border-color: #04365F; */
+    border-color: #e0001a;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+}
+
+.backCard {
+    border-width: 2px;
+    /* border-color: #04365F; */
+    border-color: #e0001a;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+}
+
+.cardHeaderFront {
+    font-weight: bold;
+    text-align: center;
+    background-color: #F7F7FF;
+}
+
+.cardHeaderBack {
+    font-weight: bold;
+    text-align: center;
+    /* background-color: #04365F; */
+    background-color: #e0001a;
+    color: white;
+}
+
+.cardBodyFront {
+    /* background-color: #04365F; */
+    /* background-color: #f16f57;
+    color: white; */
+    background-color: white;
+    color: black;
+    text-align: left;
+}
+
+.cardBodyFrontIcons{
+    /* background-color: #04365F; */
+    /* background-color: #f16f57; */
+    background-color: white;
+    display: grid;
+}
+
+.cardBodyFrontIcon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cardBodyBackIcons {
+    display: grid;
+}
+
+.cardBodyBackIcon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.faColor {
+    /* color: #04365F; */
+    color: #f16f57;
+    
+}
+
+.faColor:hover {
+    /* color: #4278d7; */
+    color: #e0001a;
+}
+
+.faColor:hover .cardBodyBackIcon{
+    border-bottom: 1px;
+    border-style: solid;
+    /* border-color: #0F65AA; */
+    border-color: #e0001a;
+}
+
+.cardBodyBack {
+    color: black;
+    text-align: left;
+    background-color: #F7F7FF;
+}
+
+@keyframes sladeOutBottom {
+    from {
+        transform: translateY(100px);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+
+.selectedText {
+    animation-name: sladeOutBottom;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: 1;
+    animation-duration: normal;
+    text-align: center;
+}
+
+@keyframes iconOpacity {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 0.5;
+    }
+}
+
+.selectedIcon {
+    animation-name: iconOpacity;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: 1;
+    animation-duration: normal;
+    /* color: #04365F; */
+    color: #f16f57;
+    opacity: 0.5;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #F7F7FF;
+}
+
+.listItem {
+    font-size: 14px;
+    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+}
+
+/* Button styling */
+.cardButton {
+    width: 100%;
+    padding: 12px;
+    margin: 50px 0;
+    border: 2px solid #e0001a;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #e0001a;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    outline: none;
+}
+
+.cardButton:hover {
+    background-color: #e0001a;
+    color: #fff;
+}
+
+/* CUSTOM CARD FOR Selfie */
+
+.custom-card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    /* border-radius: 8px; */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .custom-card:hover {
+    transform: translateY(-5px);
+    /* box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); */
+    box-shadow: 0 0 5px #e0001a, 0 0 5px #e0001a, 0 0 5px #e0001a;
+    /* border-color: #e0001a;  */
+    animation: pulseRedShadow 1s infinite ease-in-out;
+  }
+
+  @keyframes pulseRedShadow {
+    0% {
+      box-shadow: 0 0 10px rgba(224, 0, 27, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 15px rgb(224, 0, 27, 1);;
+    }
+    100% {
+      box-shadow: 0 0 10px rgb(224, 0, 27, 0.5);;
+    }
+  }
+  
+  .custom-card .bi {
+    font-size: 1.8rem;
+    margin-right: 0.5rem;
+  }
+  
+  ul {
+    padding-left: 1.2rem;
+    list-style-type: disc;
+  }
+  
+  li {
+    margin-bottom: 0.5rem;
+  }
+  

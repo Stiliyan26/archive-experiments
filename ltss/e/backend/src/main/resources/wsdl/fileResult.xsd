@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!--=========================================================================-->
+	<xs:include schemaLocation="simpleTypes.xsd"/>
+	<!--=========================================================================-->
+	<xs:complexType name="FileStatusType">
+		<xs:sequence>
+			<xs:element ref="FileTicket"/>
+			<xs:element ref="FileResultStatus"/>
+			<xs:element ref="FileResultStatusText"/>
+			<xs:element ref="FileInvoiceCount"/>
+			<xs:element ref="FileInvoiceCommit"/>
+			<xs:element ref="FileInvoiceAmount"/>
+			<xs:element ref="FileInvoices"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="FileTicket" type="xs:string"/>
+	<xs:element name="FileResultStatus" type="xs:string"/>
+	<xs:element name="FileResultStatusText" type="xs:string"/>
+	<xs:element name="FileInvoiceCount" type="xs:integer"/>
+	<xs:element name="FileInvoiceCommit" type="xs:integer"/>
+	<xs:element name="FileInvoiceAmount" type="xs:float"/>
+	<!--=========================================================================-->
+	<xs:complexType name="FileResultType">
+		<xs:choice>
+			<xs:element ref="Invoices" minOccurs="0"/>
+			<xs:element ref="Documents" minOccurs="0"/>
+		</xs:choice>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="FileInvoices" type="FileResultType"/>
+	<!--=========================================================================-->
+	<xs:complexType name="InvoicesType">
+		<xs:sequence>
+			<xs:element ref="errors"/>
+			<xs:element ref="Attachment" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:choice>
+				<xs:element ref="Invoice" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="Document" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute ref="timestamp" use="required"/>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="Invoices" type="InvoicesType"/>
+	<xs:element name="Documents" type="InvoicesType"/>
+	<!--=========================================================================-->
+	<xs:complexType name="AttachmentType">
+		<xs:sequence>
+			<xs:element ref="FileName" minOccurs="0"/>
+			<xs:element ref="errors" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="Attachment" type="AttachmentType"/>
+	<!--=========================================================================-->
+	<xs:complexType name="InvoiceType">
+		<xs:sequence>
+			<xs:element ref="FileName" minOccurs="0"/>
+			<xs:element ref="InvoiceNumber" minOccurs="0"/>
+			<xs:element ref="InvoiceDate" minOccurs="0"/>
+			<xs:element ref="errors" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="Invoice" type="InvoiceType"/>
+	<!--=========================================================================-->
+	<xs:complexType name="DocumentType">
+		<xs:sequence>
+			<xs:element ref="FileName" minOccurs="0"/>
+			<xs:element ref="DocumentDate" minOccurs="0"/>
+			<xs:element ref="errors" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="Document" type="DocumentType"/>
+	<!--=========================================================================-->
+	<xs:attribute name="timestamp" type="xs:dateTime"/>
+	<!--=========================================================================-->
+	<xs:complexType name="errorsType">
+		<xs:sequence>
+			<xs:element ref="err" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!--=========================================================================-->
+	<xs:element name="errors" type="errorsType"/>
+	<!--=========================================================================-->
+	<xs:complexType name="errType">
+		<xs:sequence>
+			<xs:element ref="errText"/>
+			<xs:element ref="xpath" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="err" type="errType"/>
+	<!--=========================================================================-->
+	<xs:element name="errText" type="errTextType"/>
+	<!--=========================================================================-->
+	<xs:element name="xpath" type="errTextType"/>
+	<!--=========================================================================-->
+	<xs:element name="FileName" type="xs:string"/>
+	<!--=========================================================================-->
+	<xs:element name="InvoiceNumber" type="InvoiceNumberType"/>
+	<!--=========================================================================-->
+	<xs:element name="InvoiceDate" type="DateType"/>
+	<!--=========================================================================-->
+	<xs:element name="DocumentDate" type="DateType"/>
+	<!--=========================================================================-->
+</xs:schema>

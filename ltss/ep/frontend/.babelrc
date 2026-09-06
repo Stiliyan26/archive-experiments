@@ -1,0 +1,28 @@
+{
+	"presets": [
+		"es2015",
+		// { "modules": false },
+		"react",
+		"airbnb"
+	],
+	"plugins": [
+		"transform-decorators-legacy",
+		"transform-object-rest-spread",
+		// "react-hot-loader/babel",
+		// "babel-root-import"
+		"dynamic-import-webpack",
+	],
+	"env": {
+		"dev": {
+			"presets": ["react-hmre"],
+			"plugins": [ "react-hot-loader/babel" ]
+		},
+		"test": {
+			"plugins": [
+				"transform-decorators-legacy",
+				"transform-object-rest-spread",
+				"istanbul"
+			]
+		}
+	}
+}

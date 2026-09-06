@@ -1,0 +1,187 @@
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:tns="https://efaktura.bg/soap/"
+             targetNamespace="https://efaktura.bg/soap/"
+             name="BillerFilesService">
+    <types>
+        <xsd:schema targetNamespace="https://efaktura.bg/soap/">
+            <!-- Existing elements -->
+            <xsd:element name="uploadFile">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="authorizationId" type="xsd:base64Binary"/>
+                        <xsd:element name="authorizationKey" type="xsd:base64Binary"/>
+                        <xsd:element name="fileName" type="xsd:base64Binary"/>
+                        <xsd:element name="fileCont" type="xsd:anyURI"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="uploadFileResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="fileTicket" type="xsd:base64Binary"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="getFileResult">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="authorizationId" type="xsd:base64Binary"/>
+                        <xsd:element name="authorizationKey" type="xsd:base64Binary"/>
+                        <xsd:element name="fileTicket" type="xsd:base64Binary"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="getFileResultResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="fileResult" type="tns:FileStatusType"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- New activateFile elements -->
+            <xsd:element name="activateFile">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="authorizationId" type="xsd:base64Binary"/>
+                        <xsd:element name="authorizationKey" type="xsd:base64Binary"/>
+                        <xsd:element name="fileTicket" type="xsd:base64Binary"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="activateFileResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="fileStatus" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- Existing complex types -->
+            <xsd:complexType name="FileStatusType">
+                <xsd:sequence>
+                    <xsd:element name="FileTicket" type="xsd:string"/>
+                    <xsd:element name="FileResultStatus" type="xsd:string"/>
+                    <xsd:element name="FileResultStatusText" type="xsd:string"/>
+                    <xsd:element name="FileInvoiceCount" type="xsd:integer"/>
+                    <xsd:element name="FileInvoiceCommit" type="xsd:integer"/>
+                    <xsd:element name="FileInvoiceAmount" type="xsd:float"/>
+                    <xsd:element name="FileInvoices" type="tns:InvoicesType"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="InvoicesType">
+                <xsd:sequence>
+                    <xsd:element name="Invoice" type="tns:InvoiceType" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="InvoiceType">
+                <xsd:sequence>
+                    <xsd:element name="FileName" type="xsd:string"/>
+                    <xsd:element name="InvoiceNumber" type="xsd:string"/>
+                    <xsd:element name="InvoiceDate" type="xsd:date"/>
+                    <xsd:element name="errors" type="tns:ErrorsType"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ErrorsType">
+                <xsd:sequence>
+                    <xsd:element name="err" type="tns:ErrorType" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ErrorType">
+                <xsd:sequence>
+                    <xsd:element name="errText" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </types>
+
+    <!-- Messages for the new activateFile operation -->
+    <message name="activateFileRequest">
+        <part name="parameters" element="tns:activateFile"/>
+    </message>
+    <message name="activateFileResponse">
+        <part name="parameters" element="tns:activateFileResponse"/>
+    </message>
+
+    <!-- Existing messages and operations -->
+    <message name="uploadFileRequest">
+        <part name="parameters" element="tns:uploadFile"/>
+    </message>
+    <message name="uploadFileResponse">
+        <part name="parameters" element="tns:uploadFileResponse"/>
+    </message>
+
+    <message name="getFileResultRequest">
+        <part name="parameters" element="tns:getFileResult"/>
+    </message>
+    <message name="getFileResultResponse">
+        <part name="parameters" element="tns:getFileResultResponse"/>
+    </message>
+
+    <!-- Port type -->
+    <portType name="BillerFilesPortType">
+        <operation name="uploadFile">
+            <input message="tns:uploadFileRequest"/>
+            <output message="tns:uploadFileResponse"/>
+        </operation>
+        <operation name="getFileResult">
+            <input message="tns:getFileResultRequest"/>
+            <output message="tns:getFileResultResponse"/>
+        </operation>
+        <!-- New activateFile operation -->
+        <operation name="activateFile">
+            <input message="tns:activateFileRequest"/>
+            <output message="tns:activateFileResponse"/>
+        </operation>
+    </portType>
+
+    <!-- Binding -->
+    <binding name="BillerFilesBinding" type="tns:BillerFilesPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="uploadFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/uploadFile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="getFileResult">
+            <soap:operation soapAction="https://efaktura.bg/soap/getFileResult"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <!-- New activateFile binding -->
+        <operation name="activateFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/activateFile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <!-- Service -->
+    <service name="BillerFilesService">
+        <port name="BillerFilesPort" binding="tns:BillerFilesBinding">
+            <soap:address location="https://demo.efaktura.bg/soap/billerFiles.php"/>
+        </port>
+    </service>
+</definitions>

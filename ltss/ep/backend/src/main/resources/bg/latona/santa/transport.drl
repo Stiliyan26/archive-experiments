@@ -1,0 +1,255 @@
+package bg.latona.santa;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.transport.*;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+
+//TransportOrder
+rule TransportOrderTransporterDefault when
+	$to: TransportOrder(transporter == null)
+	$lp: LegalPerson() from droolsRuleProcedures.findLegalPersonByEik("204074306")
+then
+	modify( $to ) {
+		setTransporter( $lp );
+	}
+	warnings.add($to.getClass().getName()+".transporter default", false);
+end
+
+
+rule VehicleAssetNameNull 
+	salience -999
+when
+	$v: Vehicle(deleted == false && (assetName == null || assetName.trim().isEmpty()) && (licensePlate == null || licensePlate.trim().isEmpty() || vehicleType == null) )
+then
+	warnings.rejectValue("Vehicle","assetName","notNull",null);
+end
+
+rule VehicleAssetNameDefault when
+	$v: Vehicle(assetName == null && licensePlate != null && vehicleType != null)
+then
+	modify( $v ) {
+		setAssetName($v.getVehicleType().getListOptionItemName() + " " + $v.getLicensePlate());
+	}
+	warnings.add($v.getClass().getName()+".assetName default", false);
+end
+
+rule VehicleLicensePlateNull 
+	salience -999
+when
+	$su: Vehicle(deleted == false && (licensePlate == null || licensePlate.trim().isEmpty()))
+then
+	warnings.rejectValue("Vehicle","licensePlate","notNull",null);
+end
+
+rule VehicleVehicleTypeNull 
+	salience -999
+when
+	$su: Vehicle(deleted == false && (vehicleType == null || vehicleType.deleted == true))
+then
+	warnings.rejectValue("Vehicle","vehicleType","notNull",null);
+end
+
+
+rule TransportOrderTransporterNull 
+	salience -999
+when
+	$su: TransportOrder(deleted == false && (transporter == null || transporter.deleted == true))
+then
+	warnings.rejectValue("TransportOrder","transporter","notNull",null);
+end
+
+rule TransportOrderOrderOrdererNull 
+	salience -999
+when
+	$su: TransportOrder(deleted == false && (orderOrderer == null || orderOrderer.deleted == true))
+then
+	warnings.rejectValue("TransportOrder","orderOrderer","notNull",null);
+end
+
+rule TransportOrderOrderRouteNull 
+	salience -999
+when
+	$su: TransportOrder(deleted == false && (orderRoute == null || orderRoute.trim().isEmpty()))
+then
+	warnings.rejectValue("TransportOrder","orderRoute","notNull",null);
+end
+
+
+rule TransportTractorUnitNull 
+	salience -999
+when
+	$su: Transport(deleted == false && tractorUnit == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","tractorUnit","notNull",null);
+end
+
+rule TransportTrailerNull 
+	salience -999
+when
+	$su: Transport(deleted == false && trailer == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","trailer","notNull",null);
+end
+
+rule TransportDriverNull 
+	salience -999
+when
+	$su: Transport(deleted == false && driver == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","driver","notNull",null);
+end
+
+rule TransportTransportTypeNull 
+	salience -999
+when
+	$su: Transport(deleted == false && transportType == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","transportType","notNull",null);
+end
+
+rule TransportDistanceKmNull 
+	salience -999
+when
+	$su: Transport(deleted == false && distanceKm == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","distanceKm","notNull",null);
+end
+
+rule TransportPaymentAmountNull 
+	salience -999
+when
+	$su: Transport(deleted == false && paymentAmount == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","paymentAmount","notNull",null);
+end
+
+rule TransportPaymentCurrencyNull 
+	salience -999
+when
+	$su: Transport(deleted == false && paymentCurrency == null && status != null && status.code != 1)
+then
+	warnings.rejectValue("Transport","paymentCurrency","notNull",null);
+end
+
+rule TransportFkInvoiceRow
+	salience -999
+when
+	$e: Transport(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: InvoiceRow(deleted == false) from $e.invoiceRows
+then
+	warnings.rejectValue("Transport","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiTransportTypeFkTransport
+	salience -999
+when
+	$e: LoiTransportType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transports
+then
+	warnings.rejectValue("LoiTransportType","deleted","fkDenyDelete",$fk);
+end
+
+rule VehicleFkTractorUnitTransport
+	salience -999
+when
+	$e: Vehicle(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transportsForTractors
+then
+	warnings.rejectValue("Vehicle","deleted","fkDenyDelete",$fk);
+end
+
+rule VehicleFkTrailersTransport
+	salience -999
+when
+	$e: Vehicle(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transportsForTrailers
+then
+	warnings.rejectValue("Vehicle","deleted","fkDenyDelete",$fk);
+end
+
+rule ShippingContainerTypeFkTransport
+	salience -999
+when
+	$e: ShippingContainerType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transports
+then
+	warnings.rejectValue("ShippingContainerType","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkTransport
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transportsForDrivers
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkTransport
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Transport(deleted == false) from $e.transports
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkTransportOrder
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrder(deleted == false) from $e.transportOrders
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule TransportOrderFkTransportOrderShippingContainer
+	salience -999
+when
+	$e: TransportOrder(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrderShippingContainer(deleted == false) from $e.shippingContainers
+then
+	warnings.rejectValue("TransportOrder","deleted","fkDenyDelete",$fk);
+end
+
+rule ShippingContainerTypeFkTransportOrderShippingContainer
+	salience -999
+when
+	$e: ShippingContainerType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: TransportOrderShippingContainer(deleted == false) from $e.transportOrderShippingContainers
+then
+	warnings.rejectValue("ShippingContainerType","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiVehicleTypeFkVehicle
+	salience -999
+when
+	$e: LoiVehicleType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Vehicle(deleted == false) from $e.vehicles
+then
+	warnings.rejectValue("LoiVehicleType","deleted","fkDenyDelete",$fk);
+end
+
+rule VehicleFkVehicleFuelReport
+	salience -999
+when
+	$e: Vehicle(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: VehicleFuelReport(deleted == false) from $e.vehicleFuelReports
+then
+	warnings.rejectValue("Vehicle","deleted","fkDenyDelete",$fk);
+end
+
+

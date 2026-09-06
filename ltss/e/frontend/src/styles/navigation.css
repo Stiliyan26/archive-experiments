@@ -1,0 +1,159 @@
+.side-menu{
+	/* background: #464646; */
+	background: #04365f;
+	color: #fff;
+	float: left;
+	width: 180px;
+	position: fixed;
+	height: 100%;
+}
+.side-menu a{
+	color: #fff;
+}
+.side-menu .ul{
+	list-style-type: none;
+	padding: 10px;
+	margin-top: 20px;
+}
+.side-menu .ul.ul-nomenclatures{
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+.side-menu .ul li a:hover{
+	text-decoration: none;
+	/* color: #31a7de; */
+	color: #fff;
+}
+.side-menu .ul li a:focus{
+	color: #fff;
+}
+.side-menu .side-menu-tab p, .side-menu .side-menu-submenu-title p{
+	padding: 5px;
+	margin: 0px;
+}
+.side-menu .side-menu-submenu{
+	display:  none;
+	padding-left: 10px;
+	height: 100%;
+	overflow:   hidden;
+}
+.side-menu .side-menu-submenu-title{
+	padding-left: 10px;
+}
+
+.side-menu .side-menu-tab:hover, .side-menu .side-menu-submenu-title:hover{
+	cursor: pointer;
+}
+/* .side-menu .side-menu-tab.hovered a, .side-menu .side-menu-tab.active a{
+	border-left: 5px solid #31a7de;
+	color: #31a7de;
+} */
+.side-menu .side-menu-tab a:focus, .side-menu .side-menu-submenu-title a:focus{
+
+	text-decoration: none;
+}
+.side-menu .side-menu-submenu{
+	list-style-type: none;
+	background-color: #292929; 
+	padding-bottom: 5px;
+}
+.caret-icon{
+	font-size: 80%;
+}
+.nav-logo-container{
+	padding: 3px;
+	/* margin: 4px; */
+	/* background-color: #fff; */
+	border-bottom: 1px solid #31a7de;
+	border-radius: 5px;
+}
+.side-menu-submenu .side-menu-tab{
+	padding-left: 5px;
+	padding-right: 0px;
+	display: flex;
+}
+
+.side-menu>.ul>.side-menu-tab, .side-menu .side-menu-submenu-title{
+	/* border: 1px solid #333; */
+	border: 1px solid #249cb9;
+	padding: 0px 0px 1px 0px;
+}
+.side-menu-tab.active,
+.side-menu-tab:hover,
+.side-menu .side-menu-submenu-title.active,
+.side-menu .side-menu-submenu-title:hover{
+	background-color:  #3b8aaf;
+}
+.side-menu-submenu .side-menu-tab{
+	margin-top: 5px;
+}
+#app .side-menu .btn-nav{
+	margin: 10px;
+	border: 1px solid #cee8ff;
+	background-color: #395ea8;
+	color: #CCFFCC;
+}
+#app .side-menu .btn-nav:hover{
+	background-color: #003399;
+	color: #CCFFCC;
+}
+.logo-string{
+	font-size: 2.4em;
+	font-family: Open serif;
+	color: #0f65aa;
+	font-weight: bold
+}
+.circle:before {
+	content: ' \25CF';
+	font-size: 28px;
+}
+.circle-blue{
+	color: #0f65aa;
+}
+.circle-aqua{
+	color: #31a7de;
+}
+.circle-green{
+	color: #9bc84a;
+}
+.circle-orange{
+	color: #f59332;
+}
+.sublogo{
+	/* color: #31a7de; */
+	color: #e0001a;
+	font-size: 0.7em;
+}
+.side-menu-tab-link, .side-menu-tab-link-wrapper, .side-menu-add-btn-wrapper{
+	display: inline-block;
+}
+.side-menu-add-btn{
+  	vertical-align: -webkit-baseline-middle;
+	padding: 4px 5px;
+	background-color: #50d950;
+	border-radius: 5px;
+	margin: 2px;
+	font-size: 1em;
+	width: 22.39px;
+	height: 23.7px;
+}
+.side-menu-tab:last-child{
+	border-bottom-right-radius: 10px;
+}
+ .side-menu-tab:first-child{
+ 	border-top-right-radius: 10px;
+ }
+ 
+ 
+a.pro-sidebar-suffix-btn:before {
+	content: none !important;
+}
+
+a.pro-sidebar-suffix-btn{
+	padding-top: 6px;
+	padding-right: 12px;
+	padding-bottom: 6px;
+	padding-left: 12px;
+	position: relative;
+}

@@ -1,0 +1,35 @@
+version: '2'
+
+services:
+
+  bgmashini_postgres:
+    build: ./postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PGang.12
+      PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      net_bgmashini_db:
+        aliases:
+          - santa_crm_db
+
+  bgmashini_backend:
+    build: ./backend
+    restart: always
+    ports:
+      - 43443:8443
+    depends_on:
+      - bgmashini_postgres
+    networks:
+      net_bgmashini_db:
+        aliases:
+          - santa_crm_backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+networks:
+  net_bgmashini_db:

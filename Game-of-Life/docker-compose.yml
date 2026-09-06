@@ -1,0 +1,51 @@
+services:
+  frontend:
+    container_name: game-of-life-frontend
+    build:
+      context: ./game-of-life
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - game-of-life
+
+  backend:
+    container_name: game-of-life-backend
+    build:
+      context: ./life-patterns-service
+      dockerfile: Dockerfile
+    environment:
+      API_PORT: 3001
+      API_CORS_ORIGINS: http://localhost:4200,http://frontend:80
+      MONGODB_URI: mongodb://mongo:27017/life-patterns
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+    networks:
+      - game-of-life
+
+  mongo:
+    container_name: game-of-life-mongo
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: life-patterns
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27018:27017"
+    networks:
+      - game-of-life
+
+volumes:
+  mongo-data:
+    name: game-of-life-mongo-data
+
+networks:
+  game-of-life:
+    driver: bridge
+    name: game-of-life-network
+

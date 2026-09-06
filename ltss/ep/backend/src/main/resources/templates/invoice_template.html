@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #000;
+            margin: 0;
+            /* padding: 20px; */
+            background-color: #f5f5f5;
+        }
+
+        .invoice-container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .containers-spacing {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            height: 120px;
+        }
+
+        .header,
+        .section-title,
+        .footer {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            font-size: 18px;
+            /* text-align: center; */
+        }
+
+        .sub-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .sub-header div {
+            width: 48%;
+            padding: 10px;
+        }
+
+        .gray-bg {
+            background-color: #f2f2f2;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .invoice-details,
+        .item-details,
+        .totals,
+        .footer {
+            margin-bottom: 20px;
+        }
+
+        .item-table,
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .item-table th,
+        .item-table td,
+        .totals-table th,
+        .totals-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .item-table th,
+        .totals-table th {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+
+        .totals .totals-table td {
+            text-align: right;
+        }
+
+        .footer {
+            font-size: 14px;
+            text-align: center;
+            font-weight: normal;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="header">
+            &
+            <div>Основание: чл.113, ал.1 от ЗДДС</div>
+        </div>
+
+        <div class="header">
+            <strong>Оригинал</strong>
+        </div>
+
+        <!-- Sub-header -->
+        <div class="sub-header">
+            <div class="gray-bg">
+                
+                    & №: & / Дата: &<br>
+                    Дата на данъчното събитие: &
+                    <br>
+                    &
+                    <strong>Доставчик:</strong><br>
+                    &<br>
+                    &<br>
+                    Идентификационен №: &<br>
+                    Идентификационен № по ДДС: &<br>
+                    Банкова сметка: &
+                
+            </div>
+
+            <div class="gray-bg">
+                <strong>Получател</strong><br>
+                Енерго Про<br>
+                БУЛ. <br>
+                1000 ГР. СОФИЯ<br>
+                Идентификационен №: &<br>
+                Идентификационен № по ДДС: &
+            </div>
+        </div>
+
+        <!-- Item Details -->
+        <div class="item-details">
+            <table class="item-table">
+                <thead>
+                    <tr>
+                        <th>Вид стоки и услуги</th>
+                        <th>Марка</th>
+                        <th>Количество</th>
+                        <th>Цена/ EUR</th>
+                        <th>Цена/ BGN</th>
+                        <th>Сума/ EUR</th>
+                        <th>Сума/ BGN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Произведена и отдадена в електроразпределителната мрежа електрическа енергия от
+                            & за периода от & до &</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals">
+            <table class="totals-table">
+                <tbody>
+                    <tr>
+                        <td>Данъчна основа в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Данъчна основа в евро</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>ДДС в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>ДДС в евро</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Обща стойност в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Обща стойност в евро</td>
+                        <td>&</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer with total amount in words -->
+        <div class="footer">
+            Сума за плащане, & лева.<br>
+            Сума за плащане, & евро.
+        </div>
+
+        <!-- Signature section -->
+        <div class="footer">
+            Съставил: &
+        </div>
+    </div>
+
+    <div class="containers-spacing"> </div>
+
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="header">
+            &
+            <div>Основание: чл.113, ал.1 от ЗДДС</div>
+        </div>
+
+        <div class="header">
+            <strong>Копие</strong>
+        </div>
+
+        <!-- Sub-header -->
+        <div class="sub-header">
+            <div class="gray-bg">
+                
+                & №: & / Дата: &<br>
+                Дата на данъчното събитие: &
+                <br>
+                &
+                <strong>Доставчик:</strong><br>
+                &<br>
+                &<br>
+                Идентификационен №: &<br>
+                Идентификационен № по ДДС: &<br>
+                Банкова сметка: &
+            
+        </div>
+
+            <div class="gray-bg">
+                <strong>Получател</strong><br>
+                Енерго Про<br>
+                БУЛ. <br>
+                1000 ГР. СОФИЯ<br>
+                Идентификационен №: &<br>
+                Идентификационен № по ДДС: &
+            </div>
+        </div>
+
+        <!-- Item Details -->
+        <div class="item-details">
+            <table class="item-table">
+                <thead>
+                    <tr>
+                        <th>Вид стоки и услуги</th>
+                        <th>Марка</th>
+                        <th>Количество</th>
+                        <th>Цена/ EUR</th>
+                        <th>Цена/ BGN</th>
+                        <th>Сума/ EUR</th>
+                        <th>Сума/ BGN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Произведена и отдадена в електроразпределителната мрежа електрическа енергия от
+                            & за периода от & до &</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                        <td>&</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals">
+            <table class="totals-table">
+                <tbody>
+                    <tr>
+                        <td>Данъчна основа в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Данъчна основа в евро</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>ДДС в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>ДДС в евро</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Обща стойност в лева</td>
+                        <td>&</td>
+                    </tr>
+                    <tr>
+                        <td>Обща стойност в евро</td>
+                        <td>&</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer with total amount in words -->
+        <div class="footer">
+            Сума за плащане, & лева<br>
+            Сума за плащане, & евро
+        </div>
+
+        <!-- Signature section -->
+        <div class="footer">
+            Съставил: &
+        </div>
+    </div>
+</body>
+
+</html>

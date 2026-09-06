@@ -1,0 +1,187 @@
+import bg.latona.santa.anvoice.entities.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import bg.latona.santa.entities.selfie.ElectricityInvoice;
+import bg.latona.santa.entities.selfie.LoiMeasurementUnit;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+global String validationEvent;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global Object triggerObject;
+global SecUser currentUser;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global org.apache.camel.CamelContext camelContext;
+
+
+rule ImportXenergieInvoiceDocumentTypeIdDefault
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && (documentTypeId == null || documentTypeId == 0L) )
+then
+	modify( $e ) {
+		setDocumentTypeId( 1L );
+	}
+end
+
+rule ImportXenergieInvoiceSelfBillingDefault
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && (selfBilling == null || selfBilling.trim().isEmpty()))
+then
+	modify( $e ) {
+		setSelfBilling( "Не" );
+	}
+end
+
+rule ImportXenergieInvoiceCreateLegalPerson
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && customerEik != null && legalPerson == null)
+	 not $elp: LegalPerson() from droolsRuleProcedures.findLegalPersonByVatNumberAndCompany($e.customerEik, $e.company)
+then
+	LegalPerson lp = new LegalPerson(null, null, null, null, false, $e.getCompany(),
+			$e.getCustomerName(), $e.getCustomerEik(), $e.getCustomerEik(), $e.getVatNumber(), null, $e.getAddress(), null, 
+			$e.getAddress(), null, null, null, null);
+	insert( lp );
+	entitiesToBeSaved.add( lp );
+	modify( $e ) {
+		setLegalPerson( lp );
+	}
+
+	Contact contact = new Contact(null, null, null, null, false, $e.getCompany(),
+			"email", "email",
+			null, null, $e.getEmail(), null, lp, null);
+	insert( contact );
+	entitiesToBeSaved.add( contact );
+end
+
+rule ImportXenergieInvoiceUpdateLegalPerson
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && customerEik != null && legalPerson == null)
+	 $lp: LegalPerson() from droolsRuleProcedures.findLegalPersonByVatNumberAndCompany($e.customerEik, $e.company)
+then
+	modify( $e ) {
+		setLegalPerson( $lp );
+	}
+end
+
+rule ImportXenergieInvoiceCreatePowerPlant
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && legalPerson != null)
+	 not $powerPlant: PowerPlant() from droolsRuleProcedures.findPowerPlantByProducerEicAndCompanyAndDeleted($e.znumber, $e.company, false)
+then
+	PowerPlant pp = new PowerPlant(null, null, null, null, false, $e.getCompany(),
+			$e.getZnumber(), null, $e.getZnumber(), null, null, $e.getZnumber(), 
+			null, $e.getContract(), null, null, null, 
+			null, null, null, null, null, 
+			null, null, null, null, $e.getLegalPerson(), 
+			null, null, null, 
+			null, null, 
+			null, null);
+	insert( pp );
+	entitiesToBeSaved.add( pp );
+end
+
+rule ImportXenergieInvoiceCreateBankAccount
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && legalPerson != null && bankConnection != null && !bankConnection.isEmpty() )
+	 not $ba: BankAccount(bankAccountOwner == $e.legalPerson) from droolsRuleProcedures.findBankAccountByIbanAndCompanyAndDeleted($e.znumber, $e.company, false)
+then
+	BankAccount ba = new BankAccount(null, null, null, null, false, $e.getCompany(),
+			$e.getLegalPerson(), $e.getBankConnection(), $e.getBankConnection(), null, null, null);
+	insert( ba );
+	entitiesToBeSaved.add( ba );
+end
+
+rule ImportXenergieInvoiceCreateAgreementSelfInvoicing
+when
+ 	 $e: ImportXenergieInvoice(deleted == false && electricityInvoice != null && electricityInvoice.powerPlant != null)
+	 not $asi: AgreementSelfInvoicing() from $e.electricityInvoice.powerPlant.agreementsSelfInvoicing
+then
+	AgreementSelfInvoicing asi = new AgreementSelfInvoicing();
+	asi.setCompany( $e.getCompany() );
+	asi.setPowerPlant( $e.getElectricityInvoice().getPowerPlant() );
+	asi.setOwnName( $e.getContract() );
+	asi.setVatNumber( $e.getVatNumber() );
+	String reasonNoVat = $e.getReasonNoVat();
+	asi.setIsVatIncluded( reasonNoVat == null || reasonNoVat.isEmpty() );
+	String product = $e.getProduct();
+	Long typeOFService = product.startsWith("RES_Purchase") ? LoiTypeOFService.RES_PURCHASE
+		: (product.startsWith("ENERGO_PRO_Balance_Plus_3M") ? LoiTypeOFService.BALANCE90
+		: (product.startsWith("ENERGO_PRO_Flex_Production_exs_2") || product.startsWith("ENERGO_PRO_Market_Production_exs_2") ? LoiTypeOFService.EXCESS_100_6
+		: (product.startsWith("ENERGO_PRO_Flex_Production_2") || product.startsWith("ENERGO_PRO_Market_Production_2") ? LoiTypeOFService.PLANNED_100_6
+		: (product.startsWith("ENERGO_PRO_Balance_Plus") || product.startsWith("ENERGO_PRO_Power_Plus") || product.startsWith("ENERGO_PRO_Production") ? LoiTypeOFService.BALANCE
+		: (product.startsWith("ENERGO_PRO_Balancing_exs") || product.startsWith("ENERGO_PRO_Classic_Production_exs") || product.startsWith("ENERGO_PRO_Classic_Prod_MinMax_exs") ? LoiTypeOFService.EXCESS
+		: (product.startsWith("ENERGO_PRO_Classic_Production") || product.startsWith("ENERGO_PRO_Classic_Prod_MinMax") ? LoiTypeOFService.PLANNED
+		: (LoiTypeOFService.PRODUCED)))))));
+
+	asi.setTypeOFService( droolsRuleProcedures.findLoiTypeOFServiceByCodeAndCompanyAndDeleted(typeOFService, $e.getCompany(), false) );
+
+	insert( asi );
+	entitiesToBeSaved.add( asi );
+end
+
+
+rule ElectricityInvoiceLoiMeasurementUnitDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && loiMeasurementUnit == null )
+	 $loi: LoiMeasurementUnit() from droolsRuleProcedures.findLoiMeasurementUnitByCodeAndCompanyAndDeleted(LoiMeasurementUnit.kWh, $e.company, false)
+then
+	modify( $e ) {
+		setLoiMeasurementUnit( $loi );
+	}
+end
+
+rule ElectricityInvoiceTotalSumInEurosDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && totalSumInLevs != null && totalSumInEuros == null )
+then
+	modify( $e ) {
+		setTotalSumInEuros( $e.getTotalSumInLevs().multiply(new BigDecimal("1.95583")) );
+	}
+end
+
+rule ElectricityInvoiceVatInLevsDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && vatInLevs == null )
+then
+	modify( $e ) {
+		setVatInLevs( BigDecimal.ZERO );
+	}
+end
+
+rule ElectricityInvoiceVatInEurosDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && vatInLevs != null && vatInEuros == null )
+then
+	modify( $e ) {
+		setVatInEuros( $e.getVatInLevs().multiply(new BigDecimal("1.95583")) );
+	}
+end
+
+rule ElectricityInvoicePriceInEurosDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && priceInLevs != null && priceInEuros == null )
+then
+	modify( $e ) {
+		setPriceInEuros( $e.getPriceInLevs().multiply(new BigDecimal("1.95583")) );
+	}
+end
+
+rule ElectricityInvoiceTotalQuantityDefault
+when
+ 	 $e: ElectricityInvoice(deleted == false && priceInLevs != null && totalSumInLevs != null && totalQuantity == null )
+then
+	modify( $e ) {
+		setTotalQuantity( $e.getTotalSumInLevs().divide( $e.getPriceInLevs(), 5, RoundingMode.HALF_UP) );
+	}
+end
+
+rule ElectricityInvoicePowerPlantFromAP
+when
+ 	 $e: ElectricityInvoice(deleted == false && reportingPointOwn != null && powerPlant == null )
+	 $pp: PowerPlant() from droolsRuleProcedures.findPowerPlantByProducerEicAndCompanyAndDeleted($e.reportingPointOwn, $e.company, false)
+then
+	modify( $e ) {
+		setPowerPlant( $pp );
+	}
+end

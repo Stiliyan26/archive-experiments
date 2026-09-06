@@ -1,0 +1,34 @@
+version: '2'
+
+services:
+
+  translogic_postgres:
+    build: ./postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PGang.12
+    networks:
+      net_translogic_db:
+        aliases:
+          - santa_crm_db
+
+  translogic_backend:
+    build: ./backend
+    restart: always
+    ports:
+      - 443:8443
+    depends_on:
+      - translogic_postgres
+    networks:
+      net_translogic_db:
+        aliases:
+          - santa_crm_backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+networks:
+  net_translogic_db:

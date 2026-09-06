@@ -1,0 +1,35 @@
+version: '2'
+
+services:
+
+  evn_postgres:
+    build: ./postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PGang.12
+      PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      net_evn_db:
+        aliases:
+          - santa_crm_db
+
+  evn_backend:
+    build: ./backend
+    restart: always
+    ports:
+      - 443:8443
+    depends_on:
+      - evn_postgres
+    networks:
+      net_evn_db:
+        aliases:
+          - santa_crm_backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+networks:
+  net_evn_db:

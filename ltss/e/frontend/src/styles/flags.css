@@ -1,0 +1,257 @@
+
+// Common properties
+$flag-width: 12em;
+$flag-height: $flag-width*10/16;
+
+// Three thirds flag
+@function thirds($first, $second, $last, $or: 90deg){
+  @return linear-gradient($or, $first 33.3%, $second 33.3%, $second 66.6%, $last 66.6%);
+}
+
+// Two halfs flag
+@function halfs($first, $second, $or: -180deg){
+  @return linear-gradient($or, $first 50%, $second 50%);
+}
+
+// Crossed flag, with or without detail
+@function cross($back, $main, $detail: $back){
+  @return linear-gradient(90deg, transparent 28%, $main 28%, $main 34%, transparent 34%),
+    linear-gradient(transparent 42%, $detail 42%, $detail 46%, $main 46%, $main 58%, $detail 58%, $detail 62%, transparent 62%),
+    linear-gradient(90deg, $back 25%, $detail 25%, $detail 28%, $main 28%, $main 34%, $detail 34%, $detail 37%, $back 37%);
+}
+
+
+// Usa flag function (13 lines)
+@function usa-lines(){
+  $dist: 100%/13;
+  $per: 0%;
+
+  @return linear-gradient(#bb133e $per, #bb133e ($per+$dist*1), white ($per+$dist*1), white ($per+$dist*2), #bb133e ($per+$dist*2), #bb133e ($per+$dist*3), white ($per+$dist*3), white ($per+$dist*4), #bb133e ($per+$dist*4), #bb133e ($per+$dist*5), white ($per+$dist*5), white ($per+$dist*6), #bb133e ($per+$dist*6), #bb133e ($per+$dist*7), white ($per+$dist*7), white ($per+$dist*8), #bb133e ($per+$dist*8), #bb133e ($per+$dist*9), white ($per+$dist*9), white ($per+$dist*10), #bb133e ($per+$dist*10), #bb133e ($per+$dist*11), white ($per+$dist*11), white ($per+$dist*12), #bb133e ($per+$dist*12));
+}
+
+@function star($a, $b){
+  @if $b%2==0{
+    @return $a*($star-size*5.5) $b*($star-size*2.7) white;
+  }@else{
+    @return ($a*($star-size*5.5) + $star-size*2.5) $b*($star-size*2.7) white;
+  }
+}
+
+//Stars of the US flag
+@function buildStars(){
+
+  $shadow: ();
+
+  @for $b from 0 to 9 {
+    @for $a from 0 to 6 {
+
+      @if $b%2==0 or $a!=5{
+
+        $shadow: append($shadow, star($a, $b), comma);
+
+      }
+    }
+  }
+
+  @return $shadow;
+}
+
+
+
+body{
+  background: #f2f2f2;
+  text-align: center;
+}
+
+%flag{
+  width: $flag-width;
+  height: $flag-height;
+  border: 1px solid #999;
+  display: inline-block;
+  margin: 2em;
+  box-shadow: 1px 1px 1px #CCC;
+  transition: all .5s;
+
+  &::after{
+    content: attr(class);
+    line-height: $flag-height*2.5;
+  }
+
+  &:hover{
+    transform: scale(1.5);
+  }
+}
+
+
+// EXCEPTIONS (not functions)
+
+.flag--spain{
+  @extend %flag;
+  background: linear-gradient(red 25%, yellow 25%, yellow 75%,  red 75%);
+}
+
+
+.flag--switzerland{
+  @extend %flag;
+  background: linear-gradient(red 20%, transparent 20%, transparent 80%, red 80%),
+    linear-gradient(90deg, red 30%, transparent 30%, transparent 45%, white 45%, white 55%, transparent 55%, transparent 70%, red 70%),
+    linear-gradient(red 42%, white 42%, white 58%, red 58%);
+}
+
+.flag--uk{
+  @extend %flag;
+  background: linear-gradient(90deg, transparent 46%, red 46%, red 56%, transparent 56%),
+    linear-gradient(transparent 38%, white 38%, white 42%, red 42%, red 58%, white 58%, white 62%, transparent 62%),
+    linear-gradient(90deg, transparent 44%, white 44%, white 46%, red 46%, red 56%, white 56%, white 58%, transparent 58%),
+    linear-gradient(33deg, transparent 45%, white 45%, white 48%, red 48%, red 54%, white 54%, white 57%, transparent 57%),
+    linear-gradient(-33deg, mediumblue 45%, white 45%, white 48%, red 48%, red 54%, white 54%, white 57%, mediumblue 57%);
+
+}
+
+.flag--japan{
+  @extend %flag;
+  background: radial-gradient(circle at 50% 50%, red 0%,  red 30%, white 30%, white 100%);
+}
+
+$star-size: ($flag-height/13)*2.45/3.7;
+.flag--usa{
+  @extend %flag;
+  position: relative;
+  background: usa-lines();
+
+  &::before{
+    box-sizing: border-box;
+    content: "\2605";
+    position: absolute;
+    text-align: left;
+    top: 0; left: 0;
+    border: $star-size solid #3C3B6E;
+    display: inline-block;
+    width: 100%*(2/5);
+    height: 100%*(7/13);
+    color: white;
+    background: #3C3B6E;
+    font-size: $star-size;
+    text-shadow: buildStars();
+  }
+}
+
+// Made WITH FUNCTIONS
+
+// Thirds
+
+.flag--ireland{
+  @extend %flag;
+  background: thirds(#00ae00, white, orange);
+}
+
+.flag--italy{
+  @extend %flag;
+  background: thirds(#00ae00, white, red);
+}
+
+.flag--belgium{
+  @extend %flag;
+  background: thirds(black, yellow, red);
+}
+
+.flag--france{
+  @extend %flag;
+  background: thirds(mediumblue, white, red);
+}
+
+.flag--romania{
+  @extend %flag;
+  background: thirds(mediumblue, yellow, red);
+}
+
+.flag--germany{
+  @extend %flag;
+  background: thirds(black, red, gold, -180deg);
+}
+
+.flag--russia{
+  @extend %flag;
+  background: thirds(white, mediumblue, red, -180deg);
+}
+
+
+.flag--bulgaria{
+  @extend %flag;
+  background: thirds(white, green, red, -180deg);
+}
+
+
+.flag--netherlands{
+  @extend %flag;
+  background: thirds(red, white, mediumblue, -180deg);
+}
+
+.flag--lithuania{
+  @extend %flag;
+  background: thirds(gold, green, red, -180deg);
+}
+
+.flag--austria{
+  @extend %flag;
+  background: thirds(red, white, red, -180deg);
+}
+
+
+.flag--hungary{
+  @extend %flag;
+  background: thirds(red, white, green, -180deg);
+}
+
+.flag--estonia{
+  @extend %flag;
+  background: thirds(royalblue, darken(royalblue, 30%), white, -180deg);
+}
+
+
+.flag--bolivia{
+  @extend %flag;
+  background: thirds(red, yellow, green, -180deg);
+}
+
+// Halfs
+
+.flag--poland{
+  @extend %flag;
+  background: halfs(white, red);
+}
+
+.flag--ukraine{
+  @extend %flag;
+  background: halfs(royalblue, yellow);
+}
+
+// Cross
+
+.flag--denmark{
+  @extend %flag;
+  background: cross(red, white);
+}
+
+
+.flag--iceland{
+  @extend %flag;
+  background: cross(mediumblue, red, white);
+}
+
+.flag--norway{
+  @extend %flag;
+  background: cross(red, blue, white);
+}
+
+.flag--finland{
+  @extend %flag;
+  background: cross(white, blue, blue);
+}
+
+
+.flag--sweden{
+  @extend %flag;
+  background: cross(mediumblue, yellow, yellow);
+}
+

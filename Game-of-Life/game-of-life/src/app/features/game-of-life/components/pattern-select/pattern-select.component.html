@@ -1,0 +1,43 @@
+<div class="pattern-select">
+  <label class="pattern-select__label" for="pattern-select">
+    Saved patterns
+  </label>
+
+  <div class="pattern-select__controls">
+    <select
+      id="pattern-select"
+      #patternSelect
+      class="pattern-select__select"
+      [disabled]="loading()"
+      (change)="onSelect(patternSelect.value)"
+    >
+      <option [value]="''" [selected]="!selectedPatternId()">Choose a pattern…</option>
+
+      @for (pattern of patterns(); track pattern.id) {
+        <option [value]="pattern.id" [selected]="pattern.id === selectedPatternId()">
+          {{ pattern.name }}
+        </option>
+      }
+    </select>
+
+    <button
+      type="button"
+      class="pattern-select__refresh"
+      [disabled]="loading()"
+      (click)="refresh()"
+    >
+      {{ loading() ? 'Loading…' : 'Refresh' }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="pattern-select__status">Loading patterns…</p>
+  } @else if (error()) {
+    <p class="pattern-select__status pattern-select__status--error">
+      {{ error() }}
+    </p>
+  } @else if (!hasPatterns()) {
+    <p class="pattern-select__status">No saved patterns yet.</p>
+  }
+</div>
+

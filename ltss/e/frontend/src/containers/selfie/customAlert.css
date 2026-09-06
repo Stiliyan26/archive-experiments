@@ -1,0 +1,55 @@
+/* .customAlert::before {
+    height: 120%;
+    position: absolute;
+    background-color: white;
+    box-shadow: 0 0 20px rgb(224, 0, 27);
+    animation: animate 4s linear infinite;
+}
+
+.customAlert::after {
+
+    position: absolute;
+    inset: 10px;
+    background-color: white;
+    
+} */
+
+.pulsating-red-border {
+  color: rgb(224, 0, 27);
+  box-shadow: 0 0 5px rgb(224, 0, 27, 1);
+  animation: pulseRedShadow 1s infinite ease-in-out;
+}
+
+@keyframes pulseRedShadow {
+  0% {
+    box-shadow: 0 0 5px rgba(224, 0, 27, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 10px rgb(224, 0, 27, 1);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgb(224, 0, 27, 0.5);
+  }
+}
+
+.pulsating-green-border {
+  color: rgb(44, 176, 44);
+  box-shadow: 0 0 5px rgb(44, 176, 44, 1);
+  animation: pulseGreenShadow 1s infinite ease-in-out;
+}
+
+@keyframes pulseGreenShadow {
+  0% {
+    box-shadow: 0 0 5px rgba(44, 176, 44, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 10px rgb(44, 176, 44, 1);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgb(44, 176, 44, 0.5);
+  }
+}

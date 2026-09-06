@@ -1,0 +1,194 @@
+import bg.latona.santa.entities.nepal.*;
+import bg.latona.santa.entities.person.*;
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.security.*;
+import bg.latona.santa.entities.selfie.*;
+
+import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
+import java.util.LinkedList
+import java.util.List
+
+import bg.latona.santa.repositories.MailAccountRepository
+import bg.latona.santa.entities.mail.MailAccount
+import bg.latona.santa.entities.mail.MailTemplate
+import bg.latona.santa.repositories.MailTemplateRepository
+import bg.latona.santa.entities.mail.SendMailMessage
+
+import java.util.ArrayList
+import java.util.Set
+import java.util.HashSet
+import java.util.Arrays;
+import java.time.LocalDate
+import java.util.Map;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+global String validationEvent;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global Object triggerObject;
+global SecUser currentUser;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+
+global LocalDate currentLocalDate;
+
+
+rule AccountingPeriodIsActiveValidation
+when
+ 	 $e: AccountingPeriod(deleted == false && isActive == true && validationEvent.startsWith("beforeSave"))
+then
+	List<AccountingPeriod> accountingPeriods = droolsRuleProcedures.findAccountingPeriodByIsActiveAndDeleted(true, false);
+	if (accountingPeriods.size() == 1) {
+		warnings.rejectValue("AccountingPeriod","isActive","ActivePeriodValidation",null);
+	}
+end
+
+/*rule CreateUpdatedElectricityInvoice
+when
+ 	 $e: ElectricityInvoice(deleted == false && loiDocumentType!.listOptionItemCode != LoiDocumentType.INVOICE && validationEvent.startsWith("afterSave"))
+then
+
+	ElectricityInvoice electricityInvoice = $e.getElectricityInvoice();
+
+	PowerPlant powerPlant = droolsRuleProcedures.findPowerPlantByAccessPointAndCompanyAndDeleted(electricityInvoice.getReportingPointOwn(), electricityInvoice.getCompany(), false);
+
+            boolean isVatIncluded = powerPlant.getAgreementsSelfInvoicing() != null
+                    && powerPlant.getAgreementsSelfInvoicing().get(powerPlant.getAgreementsSelfInvoicing().size() - 1).getIsVatIncluded() != null
+                    ? powerPlant.getAgreementsSelfInvoicing().get(powerPlant.getAgreementsSelfInvoicing().size() - 1).getIsVatIncluded()
+                    : powerPlant.getOwner().getVatNumber() != null && !powerPlant.getOwner().getVatNumber().isEmpty();
+
+            BigDecimal priceInLevs = $e.getPriceInLevs();
+            BigDecimal totalQuantity = $e.getTotalQuantity();
+
+            BigDecimal totalSumInLevs = priceInLevs.divide(totalQuantity, 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalSumInEuro = totalSumInLevs.divide(BigDecimal.valueOf(1.96), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal priceInEuro = priceInLevs.divide(BigDecimal.valueOf(1.96), 2, BigDecimal.ROUND_HALF_UP);
+
+            BigDecimal vatInLevs = isVatIncluded ? totalSumInLevs.multiply(BigDecimal.valueOf(0.2)) : BigDecimal.ZERO;
+            BigDecimal vatInEuro = isVatIncluded ? totalSumInEuro.multiply(BigDecimal.valueOf(0.2)) : BigDecimal.ZERO;
+
+
+    //        ElectricityInvoice newElectricityInvoice = $e;
+
+            $e.setTaxEventDate(currentLocalDate);
+            $e.setReportingPointOwn(electricityInvoice.getReportingPointOwn());
+            $e.setPeriodFrom(electricityInvoice.getPeriodFrom());
+            $e.setPeriodTo(electricityInvoice.getPeriodTo());
+
+            *//*$e.setTotalQuantity(totalQuantity);
+            $e.setPriceInLevs(priceInLevs);*//*
+
+            $e.setPriceInEuros(priceInEuro);
+            $e.setVatInLevs(vatInLevs);
+            $e.setTotalSumInLevs(totalSumInLevs);
+            $e.setVatInEuros(vatInEuro);
+            $e.setTotalSumInEuros(totalSumInEuro);
+            $e.setIsValid(true);
+            $e.setHasDbFile(false);
+
+            $e.setAgreementType(electricityInvoice.getAgreementType());
+            $e.setLoiMeasurementUnit(electricityInvoice.getLoiMeasurementUnit());
+
+
+            *//*LoiDocumentType loiDocumentType = droolsRuleProcedures
+                    .findLoiDocumentTypeByCodeAndCompanyAndDeleted($e.getLoiDocumentType().getId(), electricityInvoice.getCompany(), false);
+            newElectricityInvoice.setLoiDocumentType(loiDocumentType);*//*
+
+            *//*newElectricityInvoice.setElectricityInvoice(electricityInvoice);*//*
+
+			insert($e);
+            entitiesToBeSaved.add($e);
+    //        Map<String, List<String>> generatePdf = droolsRuleProcedures.generatePdfDocuments();
+end
+
+rule GeneratePdfDocumentForUpdatedElectricityInvoice
+salience -9999999999
+when
+// 	 $e: ElectricityInvoice(hasDbFile == false *//*&& isValid == true*//* && deleted == false && validationEvent.startsWith("after"))
+ 	 $e: ElectricityInvoice(hasDbFile == false && isValid == true && deleted == false && (id == triggerObject#CommonRecord.id && validationEvent.startsWith("after")))
+then
+	Map<String, List<String>> generatePdf = droolsRuleProcedures.generatePdfDocuments();
+end*/
+
+rule ImportValueCreatingRelationWithPowerPlant
+	salience -999
+when
+ 	 $e: ImportValue(deleted == false && validationEvent.startsWith("afterSave"))
+then
+	PowerPlant powerPlant = droolsRuleProcedures.findPowerPlantByAccessPointAndCompanyAndDeleted($e.getReportingPointOwn(), $e.getCompany(), false);
+	if (powerPlant != null) {
+		insert($e);
+		$e.setPowerPlant(powerPlant);
+		entitiesToBeSaved.add($e);
+	}
+end
+
+rule ImportQuantityCreatingRelationWithPowerPlant
+	salience -999
+when
+ 	 $e: ImportQuantity(deleted == false && validationEvent.startsWith("afterSave"))
+then
+	PowerPlant powerPlant = droolsRuleProcedures.findPowerPlantByAccessPointAndCompanyAndDeleted($e.getReportingPointOwn(), $e.getCompany(), false);
+	if (powerPlant != null) {
+		insert($e);
+		$e.setPowerPlant(powerPlant);
+		entitiesToBeSaved.add($e);
+	}
+end
+
+rule ImportValueAndQuantityCreatingRelationWithPowerPlant
+	salience -999
+when
+ 	 $e: ImportValueAndQuantity(deleted == false && validationEvent.startsWith("afterSave"))
+then
+	PowerPlant powerPlant = droolsRuleProcedures.findPowerPlantByAccessPointAndCompanyAndDeleted($e.getReportingPointOwn(), $e.getCompany(), false);
+	if (powerPlant != null) {
+		insert($e);
+		$e.setPowerPlant(powerPlant);
+		entitiesToBeSaved.add($e);
+	}
+end
+
+rule PowerPlantCreatingRelationWithImportValue
+	salience -999
+when
+ 	 $e: PowerPlant(deleted == false && validationEvent.startsWith("afterCreate"))
+then
+	ImportValue importValue = droolsRuleProcedures.findImportValueByReportingPointOwnAndCompanyAndDeleted($e.getAccessPoint(), $e.getCompany(), false);
+	if (importValue != null) {
+
+		insert(importValue);
+		importValue.setPowerPlant($e);
+		entitiesToBeSaved.add(importValue);
+	}
+end
+
+rule PowerPlantCreatingRelationWithImportQuantity
+	salience -999
+when
+ 	 $e: PowerPlant(deleted == false && validationEvent.startsWith("afterCreate"))
+then
+	ImportQuantity importQuantity = droolsRuleProcedures.findImportQuantityByReportingPointOwnAndCompanyAndDeleted($e.getAccessPoint(), $e.getCompany(), false);
+	if (importQuantity != null) {
+
+		insert(importQuantity);
+		importQuantity.setPowerPlant($e);
+		entitiesToBeSaved.add(importQuantity);
+	}
+end
+
+rule PowerPlantAndQuantityCreatingRelationWithImportValueAndQuantity
+	salience -999
+when
+ 	 $e: PowerPlant(deleted == false && validationEvent.startsWith("afterCreate"))
+then
+	ImportValueAndQuantity importValueAndQuantity = droolsRuleProcedures.findImportValueAndQuantityByReportingPointOwnAndCompanyAndDeleted($e.getAccessPoint(), $e.getCompany(), false);
+	if (importValueAndQuantity != null) {
+
+		insert(importValueAndQuantity);
+		importValueAndQuantity.setPowerPlant($e);
+		entitiesToBeSaved.add(importValueAndQuantity);
+	}
+end
+

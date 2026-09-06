@@ -1,0 +1,269 @@
+#login - get the token
+curl https://127.0.0.1:8443/api/login -k -X POST -F 'username=admin1' -F 'password=123'
+#download the main application
+curl https://37.157.143.162:43443/app.js -k
+#get API list
+curl https://37.157.143.162:43443/api -k
+#get API profile
+curl https://37.157.143.162:43443/api/profile -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get some repository profile
+curl https://37.157.143.162:43443/api/profile/allocationTypes -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get income
+curl https://37.157.143.162:43443/api/incomes -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl https://37.157.143.162:43443/api/invoices/12541/invoiceCounterParty -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#get report getOrderGoods
+curl https://37.157.143.162:43443/api/reports/getOrderGoods/1 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl https://37.157.143.162:43443/api/reports/getStocks/25200/01012000/01012100 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl https://127.0.0.1:8443/api/reports/getOfferState/235657 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl https://127.0.0.1:8443/api/reports/getOfferState/239459 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#get offer definition
+curl https://37.157.143.162:43443/api/profile/cOffers -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get offers' list
+curl https://37.157.143.162:43443/api/cOffers -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get concrete offer
+curl https://37.157.143.162:43443/api/cOffers/3384 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create offer
+curl https://37.157.143.162:43443/api/cOffers \
+       -X POST -H "Content-Type: application/json" \
+      -d '{"numberOfr":1,"remark":null,"discount":0,"vat":20,"person":null,"advanceTotal":0,"outCode":"https://37.157.143.162:43443/api/cCcOrganizationUnits/3544","partner":"https://37.157.143.162:43443/api/cCcPartners/3548","status":"https://37.157.143.162:43443/api/loiOfferStatuses/3428"}' \
+      -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create offer detail
+curl https://37.157.143.162:43443/api/cOfferDetails -X POST -H "Content-Type: application/json" \
+-d '{"ofrId":"https://37.157.143.162:43443/api/cOffers/3554","price1":"5","discount":0,"quantity":"7","godId":"https://37.157.143.162:43443/api/cGoodses/3461","meeId":"https://37.157.143.162:43443/api/cMeasures/3442"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get refs for offers
+curl https://37.157.143.162:43443/api/cCcOrganizationUnits -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "code=01" https://37.157.143.162:43443/api/cCcOrganizationUnits -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/cCcPartners -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "code=ДР" https://37.157.143.162:43443/api/cCcPartners -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/cCcPartners -X POST -H "Content-Type: application/json" \
+-d '{"code":"00003","name":"Доставчик 3","bulstat":"9534523","address":"гр. София ул Иван Асен 68","tel":"885632458","fax":"fax","mol":"mol","activeFrom":"2022-04-10","activeTo":"2100-01-01","vatNo":"BG9534523","email":"email","accountMgrUser":"https://37.157.143.162:43443/api/secUsers/3","legalStatus":"https://37.157.143.162:43443/api/loiLegalStatuses/3446","outCode":"https://37.157.143.162:43443/api/cCcOrganizationUnits/3544","partnerGroup":"https://37.157.143.162:43443/api/cCtPartnerGroups/3550","partnerType":"https://37.157.143.162:43443/api/loiPartnerTypes/3422"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/cCtCurrencies -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/loiOfferStatuses -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl https://37.157.143.162:43443/api/loiOfferStatuses?listOptionItemCode=2 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get goods
+curl https://37.157.143.162:43443/api/cGoodses -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "code=000023" https://37.157.143.162:43443/api/cGoodses -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create goods
+curl https://37.157.143.162:43443/api/cGoodses -X POST -H "Content-Type: application/json" \
+-d '{"nameBg":"помпа","code":"pump","gteId":"https://37.157.143.162:43443/api/cCcGoodsTypes/3444","goodType":"https://37.157.143.162:43443/api/cGoodsTypes/3384","outCode":"https://37.157.143.162:43443/api/cCcOrganizationUnits/3428","meeId":"https://37.157.143.162:43443/api/cMeasures/3457","goodMark":"https://37.157.143.162:43443/api/cGoodMarks/3436"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get refs for goods
+curl https://37.157.143.162:43443/api/cGoodMarks -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "code=Други" https://37.157.143.162:43443/api/cCcGoodsTypes -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "listOptionItemCode=1" https://37.157.143.162:43443/api/loiGoodsTypes -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get measure
+curl https://37.157.143.162:43443/api/cMeasures -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+curl --get --data-urlencode "code=БР" https://37.157.143.162:43443/api/cMeasures -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create service
+curl https://37.157.143.162:43443/api/cServices -X POST -H "Content-Type: application/json" \
+-d '{"code":"ДОСТ","name":"Доставка","description":"Доставка","meeId":"https://127.0.0.1:8443/api/cMeasures/3510","outCode":"https://127.0.0.1:8443/api/cCcOrganizationUnits/3508"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get service by code
+curl --get --data-urlencode "code=ДОСТ" https://37.157.143.162:43443/api/cServices -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#add service to the offer
+curl https://37.157.143.162:43443/api/cOfferDetails -X POST -H "Content-Type: application/json" \
+-d '{"ofrId":"https://37.157.143.162:43443/api/cOffers/3609","price1":"4.69","discount":0,"quantity":1,"seeId":"https://37.157.143.162:43443/api/cServices/3512","meeId":"https://37.157.143.162:43443/api/cMeasures/3510"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#confirm offer
+curl https://37.157.143.162:43443/api/reports/makeRequest/3498/admin1/testdata -X POST \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create mark
+curl https://37.157.143.162:43443/api/cGoodMarks -X POST -H "Content-Type: application/json" \
+-d '{"markCode":"BOS","markName":"BOSCH","description":"Бош","lastNumber":"2","outCode":"https://127.0.0.1:8443/api/cCcOrganizationUnits/3430"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#edit mark
+curl https://37.157.143.162:43443/api/cGoodMarks/3510 -X PATCH -H "Content-Type: application/json" \
+-d '{"markCode":"BOS","markName":"BOSCH Gmbh.","description":"Бош","lastNumber":"2","outCode":"https://127.0.0.1:8443/api/cCcOrganizationUnits/3430"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create delivery for migration
+curl https://37.157.143.162:43443/api/cDeliveries -X POST -H "Content-Type: application/json" \
+-d '{"groundsNumber":1,"groundsDate":"2022-06-17T12:51:27.077+00:00","typeDoc":"https://37.157.143.162:43443/api/loiTypeDocs/3498","outCode":"https://37.157.143.162:43443/api/cCcOrganizationUnits/24806"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#get typeDoc ref
+curl --get --data-urlencode "listOptionItemCode=7" https://37.157.143.162:43443/api/loiTypeDocs -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create delivery detail
+curl https://37.157.143.162:43443/api/cDeliveryDetails -X POST -H "Content-Type: application/json" \
+-d '{"deyId":"https://37.157.143.162:43443/api/cDeliveries/24826","quantity":"11","price":"47","godId":"https://37.157.143.162:43443/api/cGoodses/24836"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#generate stocks
+curl https://37.157.143.162:43443/api/reports/modifyStocks/24826/24806 -X POST \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create price
+curl https://37.157.143.162:43443/api/cPriceLists -X POST -H "Content-Type: application/json" \
+-d '{"price1":123,"basePrice":123,"parId":"https://37.157.143.162:43443/api/cCcPartners/24845","godId":"https://37.157.143.162:43443/api/cGoodses/24836"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/reports/getCurrentStock \
+       -X POST -H "Content-Type: application/json" \
+      -d '["43266","1936","76500"]' \
+      -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#get exchange rate
+curl https://37.157.143.162:43443/api/cPmtCurrencyRates -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#create vendor invoice
+curl https://37.157.143.162:43443/api/vendorInvoices -X POST -H "Content-Type: application/json" \
+-d '{"invoiceNum":133,"invoiceDate":"2022-07-11","invoiceDescription":"фактура покупка","invoiceExchangeRate":1,"invoiceCounterParty":"https://37.157.143.162:43443/api/cCcPartners/25238","invoiceCurrency":"https://37.157.143.162:43443/api/cCtCurrencies/25204"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#create vendor invoice row
+curl https://37.157.143.162:43443/api/vendorInvoiceRows -X POST -H "Content-Type: application/json" \
+-d '{"invoiceRowDescription":"стока","quantity":2,"priceRate":220,"invoice":"https://37.157.143.162:43443/api/vendorInvoices/231505","goods":"https://37.157.143.162:43443/api/cGoodses/40952"}' \
+-k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#post income
+#doesn't create the onetomany entity
+#Unless you do the following setting:
+#	@RestResource(exported = false)
+#	//@JsonIgnore //avoid serialization recursion by Jackson
+#	@OneToMany(mappedBy = "attachable",cascade = CascadeType.ALL)
+# but then the nested entity is not getting separate validation event!
+curl https://37.157.143.162:43443/api/incomes \
+	 -X POST -H "Content-Type: application/json" \
+	 -d '{"name":930902,"incomeDesc":"5000002885,5000002897,5000002891,50/NTYPE/000000000000","incomePayer":"https://37.157.143.162:43443/api/legalPersons/2680","attachableRevenuesAndExpenses":[{"article":"https://37.157.143.162:43443/api/currencies/2426","ammount": 53.76}]}' \
+	 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl https://37.157.143.162:43443/api/incomes \
+	 -X POST -H "Content-Type: application/hal+json" \
+	 -d '{"name":930902,"incomeDesc":"5000002885,5000002897,5000002891,50/NTYPE/000000000000","incomePayer":"https://37.157.143.162:43443/api/legalPersons/2680","attachableRevenuesAndExpenses":[{"article":"https://37.157.143.162:43443/api/currencies/2426","ammount": 53.76}]}' \
+	 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#get attachableRevenuesAndExpenses
+curl https://37.157.143.162:43443/api/attachableRevenuesAndExpenseses -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+#post attachableRevenuesAndExpenses
+curl https://37.157.143.162:43443/api/attachableRevenuesAndExpenseses \
+	 -X POST -H "Content-Type: application/hal+json" \
+	 -d '{"article":"https://37.157.143.162:43443/api/currencies/2426","ammount": 53.76,"attachable":{"name":930902,"incomeDesc":"5000002885,5000002897,5000002891,50/NTYPE/000000000000","incomePayer":"https://37.157.143.162:43443/api/legalPersons/2680"}}' \
+	 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#post invoice
+curl https://37.157.143.162:43443/api/invoices \
+	 -X POST -H "Content-Type: application/json" \
+	 -d '{"calculateOnly":true,"id":null,"createdBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"},"createdDate":1637138510928,"lastModifiedBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"},"lastModifiedDate":1637138510928,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"invoiceNum":null,"invoiceDate":1637138510928,"invoiceCode":null,"invoiceDescription":null,"isIssued":null,"isExported":null,"invoiceCounterParty":null,"paymentType":null,"bankAccount":null,"vatExemptionReason":null,"invoiceCurrency":null,"taxBaseAmount":null,"taxAmount":null,"totalAmount":null,"issuedBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"}}' \
+	 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#
+curl "https://37.157.143.162:43443/api/reports/builder/1?from=Invoice&select=Invoice.issuedBy,Invoice.invoiceCounterParty,Invoice.paymentType,Invoice.bankAccount,Invoice.invoiceCurrency,Invoice.vatExemptionReason,Invoice&summary=sum(Invoice.allocationProxies.consumerAllocationRecords.ammount):sum_ammount&where=isFalse(Invoice.isIssued)&page=0&size=5&sort=Invoice.id%2Cdesc" -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+
+curl "https://127.0.0.1:8443/api/reports/builder/1?from=PowerPlantMeterReading&select=PowerPlantMeterReading&having=and(gt(PowerPlantMeterReading.endTS%3BlocalDateTimeLiteral(2024-01-01T00:00:00))%3Ble(PowerPlantMeterReading.endTS%3BlocalDateTimeLiteral(2024-01-31T00:00:00)))&page=1&size=1000&sort=PowerPlantMeterReading.id%2Cdesc" -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+curl "https://127.0.0.1:8443/api/reports/builder/1?from=PowerPlantMeterReading&select=PowerPlantMeterReading&having=and(gt(PowerPlantMeterReading.endTS%3BlocalDateTimeLiteral(2024-01-01T00:00:00))%3Ble(PowerPlantMeterReading.endTS%3BlocalDateTimeLiteral(2024-01-31T00:00:00)))&page=1&size=1000&sort=PowerPlantMeterReading.id%2Cdesc" -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#service call
+curl https://37.157.143.162:43443/api/service/orderProcessing \
+	 -X POST -H "Content-Type: application/json" \
+	 -d '{"calculateOnly":true,"id":null,"createdBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"},"createdDate":1637138510928,"lastModifiedBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"},"lastModifiedDate":1637138510928,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"invoiceNum":null,"invoiceDate":1637138510928,"invoiceCode":null,"invoiceDescription":null,"isIssued":null,"isExported":null,"invoiceCounterParty":null,"paymentType":null,"bankAccount":null,"vatExemptionReason":null,"invoiceCurrency":null,"taxBaseAmount":null,"taxAmount":null,"totalAmount":null,"issuedBy":{"id":11739,"createdDate":1632927398853,"lastModifiedDate":1632927398853,"deleted":false,"company":{"id":9158,"createdBy":null,"createdDate":1509530428565,"lastModifiedBy":null,"lastModifiedDate":1509530428565,"deleted":false,"name":"Translogic","code":1,"storeId":"bd5aa2c0-2e7d-4ef4-b44d-b24bc9bb3593"},"name":"apostol","fullName":"Апостол Борисов Стоименов","email":"","code":"AS"}}' \
+	 -k -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbjEiLCJleHAiOjE3MTMxNjk5NjN9.tzoP0VUevEGAf9eDhtpYkNULXGo8ZYod62CtpxbmnbIHxt4na4XMQmHqMbxyELXWhUqK3FPnfk-3_6hpMKSwag'
+
+#call to service for allocation
+curl -k -X 'POST' \
+  'https://services.latona.eu:8243/services/paymentMatcher/0.0.3/transaction/match' \
+  -H 'accept: */*' \
+  -H 'Authorization: Basic YWRtaW46YVJpMTg=' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "paymentInformation": [
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 12171.4,
+            "transactionSide": "C",
+            "transactionDate": "2021-11-06T00:00:00.000+00:00",
+            "ownerAccountCurrency": "BGN",
+            "transactionType": "",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "description": "9400105",
+            "possibleDocumentNumber": "5000002755,5000002754,5000002763,50/NTYPE/000000000000"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 12666.79,
+            "transactionSide": "C",
+            "transactionDate": "2021-11-02T00:00:00.000+00:00",
+            "ownerAccountCurrency": "BGN",
+            "transactionType": "",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "description": "6697319",
+            "possibleDocumentNumber": "5000002795,5000002818,5000002800,50/NTYPE/000000000000"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 2345,
+            "transactionSide": "C",
+            "transactionDate": "2021-11-06T00:00:00.000+00:00",
+            "ownerAccountCurrency": "EUR",
+            "transactionType": "",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "description": "0002345",
+            "possibleDocumentNumber": "5000002345"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 1384.73,
+            "transactionSide": "C",
+            "transactionDate": "2021-11-06T00:00:00.000+00:00",
+            "ownerAccountCurrency": "BGN",
+            "transactionType": "",
+            "corespondentName": "Other",
+            "description": "3899024",
+            "possibleDocumentNumber": "ф.5 2813"
+        }
+    ],
+    "paymentElements": [
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 1000.00,
+            "dueDate": "2021-11-01T00:00:00.000+00:00",
+            "transactionSide": "C",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "documentNumber": "5000002755"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 2000.00,
+            "dueDate": "2021-11-01T00:00:00.000+00:00",
+            "transactionSide": "C",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "documentNumber": "5000002754"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 3000.00,
+            "dueDate": "2021-11-01T00:00:00.000+00:00",
+            "transactionSide": "C",
+            "corespondentName": "ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД",
+            "documentNumber": "5000002763"
+        },
+        {
+            "ownerIBAN": "",
+            "corespondentIBAN": "",
+            "amount": 1384.73,
+            "dueDate": "2021-11-01T00:00:00.000+00:00",
+            "transactionSide": "C",
+            "corespondentName": "Other",
+            "documentNumber": "5000002813"
+        }
+    ],
+    "projectName": "LOGISTICS"
+}'
+
+curl -k -X 'POST' \
+  'https://services.latona.eu:8243/services/paymentMatcher/0.0.3/transaction/match' \
+  -H 'accept: */*' \
+  -H 'Authorization: Basic YWRtaW46YVJpMTg=' \
+  -H 'Content-Type: application/json' \
+  -d '{"paymentInformation":[{"ownerIBAN":"","corespondentIBAN":"","amount":480,"transactionSide":"C","transactionDate":"2021-09-10T21:00:00.000+00:00","ownerAccountCurrency":"BGN","transactionType":"","corespondentName":"КАРГО ПАРТНЕР ЕООД","description":"test3","possibleDocumentNumber":"3"},{"ownerIBAN":"","corespondentIBAN":"","amount":1200,"transactionSide":"C","transactionDate":"2021-09-09T21:00:00.000+00:00","ownerAccountCurrency":"BGN","transactionType":"","corespondentName":"ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД","description":"test2 - 2","possibleDocumentNumber":"2"},{"ownerIBAN":"","corespondentIBAN":"","amount":1200,"transactionSide":"C","transactionDate":"2021-09-08T21:00:00.000+00:00","ownerAccountCurrency":"BGN","transactionType":"","corespondentName":"ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД","description":"test2 - 1","possibleDocumentNumber":"2"},{"ownerIBAN":"","corespondentIBAN":"","amount":1200,"transactionSide":"C","transactionDate":"2021-09-07T21:00:00.000+00:00","ownerAccountCurrency":"BGN","transactionType":"","corespondentName":"ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД","description":"test","possibleDocumentNumber":"test - 1"}],"paymentElements":[{"ownerIBAN":"","corespondentIBAN":"","amount":480,"dueDate":"2021-09-07T17:01:24.880+00:00","transactionSide":"C","corespondentName":"КАРГО ПАРТНЕР ЕООД","documentNumber":"тест 3","ownerAccountCurrency":"BGN"},{"ownerIBAN":"","corespondentIBAN":"","amount":2400,"dueDate":"2021-09-07T15:51:31.509+00:00","transactionSide":"C","corespondentName":"ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД","documentNumber":"Z","ownerAccountCurrency":"BGN"},{"ownerIBAN":"","corespondentIBAN":"","amount":1200,"dueDate":"2021-08-31T21:00:00.000+00:00","transactionSide":"C","corespondentName":"ЮНИМАСТЪРС ЛОДЖИСТИКС ЕС СИ ЕС ЕООД","documentNumber":"Z","ownerAccountCurrency":"BGN"}],"projectName":"LOGISTICS"}'

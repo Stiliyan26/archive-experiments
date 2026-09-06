@@ -1,0 +1,552 @@
+import bg.latona.santa.entities.nepal.*;
+import bg.latona.santa.entities.person.*;
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.security.*;
+import java.math.BigDecimal
+import java.util.LinkedList
+import java.util.List
+import bg.latona.santa.repositories.MailAccountRepository
+import bg.latona.santa.entities.mail.MailAccount
+import bg.latona.santa.entities.mail.MailTemplate
+import bg.latona.santa.repositories.MailTemplateRepository
+import bg.latona.santa.entities.mail.SendMailMessage
+import java.util.ArrayList;
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+global String validationEvent;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global Object triggerObject;
+global SecUser currentUser;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+/*
+rule PowerPlantInstalledPowerMwDefault when
+	$e: PowerPlant(installedPowerMw == null)
+then
+
+	modify( $e ) {
+		setInstalledPowerMw(BigDecimal.ZERO);
+	}
+end*/
+
+rule ScheduleIsSentValidation
+	salience -999
+when
+ 	 $e: Schedule(deleted == false && isSent == true && validationEvent.startsWith("beforeSave"))
+ 	 $old: Schedule(deleted == false && isSent == true && messageVersion == $e.messageVersion) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("Schedule","isSent","scheduleIsSent",null);
+end
+
+rule PowerPlantProfileDefaultCreatingQuarterOfHours
+	salience -999
+when
+ 	 $e: PowerPlantProfile(deleted == false && validationEvent.startsWith("afterCreate"))
+then
+	for(int i = 1; i < 97; i++) {
+	  QuarterOfHour quarterOfHour = new QuarterOfHour();
+	  quarterOfHour.setQuarterOfHour(BigDecimal.valueOf(i));
+	  quarterOfHour.setValue(BigDecimal.ZERO);
+	  quarterOfHour.setPowerPlantProfile($e);
+
+	  insert(quarterOfHour);
+	  entitiesToBeSaved.add(quarterOfHour);
+	}
+end
+
+rule QuarterOfHourDeletedUpdate when
+ 	 $e: PowerPlantProfile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+ 	 $fk: QuarterOfHour(deleted == false) from $e.quarterOfHours
+then
+	insert($fk);
+	modify($fk){
+		setDeleted(true);
+	}
+	entitiesToBeSaved.add( $fk );
+end
+
+rule IbexEnergyDealFkIbexEnergyDealLeg
+	salience -999
+when
+	$e: IbexEnergyDeal(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: IbexEnergyDealLeg(deleted == false) from $e.legs
+then
+	warnings.rejectValue("IbexEnergyDeal","deleted","fkDenyDelete",$fk);
+end
+
+/*
+rule ScheduleFkScheduleTimeSeries
+	salience -999
+when
+	$e: Schedule(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ScheduleTimeSeries(deleted == false) from $e.scheduleTimeSeries
+then
+	warnings.rejectValue("Schedule","deleted","fkDenyDelete",$fk);
+end
+
+rule ScheduleTimeSeriesFkInterval
+	salience -999
+when
+	$e: ScheduleTimeSeries(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Interval(deleted == false) from $e.intervals
+then
+	warnings.rejectValue("ScheduleTimeSeries","deleted","fkDenyDelete",$fk);
+end
+*/
+
+rule ScheduleFkScheduleTimeSeries when
+ 	 $e: Schedule(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+ 	 $fk: ScheduleTimeSeries(deleted == false) from $e.scheduleTimeSeries
+then
+	insert($fk);
+	modify($fk){
+		setDeleted(true);
+	}
+	entitiesToBeSaved.add( $fk );
+end
+
+rule ScheduleTimeSeriesFkInterval when
+ 	 $e: ScheduleTimeSeries(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+ 	 $fk: Interval(deleted == false) from $e.intervals
+then
+	insert($fk);
+	modify($fk){
+		setDeleted(true);
+	}
+	entitiesToBeSaved.add( $fk );
+end
+
+rule LoiContractFeeFkPowerPlant
+	salience -999
+when
+	$e: LoiContractFee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiContractFee","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiContractPriceFkPowerPlant
+	salience -999
+when
+	$e: LoiContractPrice(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiContractPrice","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiContractQuantityFkPowerPlant
+	salience -999
+when
+	$e: LoiContractQuantity(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiContractQuantity","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiContractStatusFkPowerPlant
+	salience -999
+when
+	$e: LoiContractStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiContractStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiProtocolCountPerMonthFkPowerPlant
+	salience -999
+when
+	$e: LoiProtocolCountPerMonth(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiProtocolCountPerMonth","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiProtocolLineCountFkPowerPlant
+	salience -999
+when
+	$e: LoiProtocolLineCount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiProtocolLineCount","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiTypeOfPowerPlantFkPowerPlant
+	salience -999
+when
+	$e: LoiTypeOfPowerPlant(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiTypeOfPowerPlant","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiGridFkPowerPlant
+	salience -999
+when
+	$e: LoiGrid(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LoiGrid","deleted","fkDenyDelete",$fk);
+end
+
+//TODO do not uncomment this rule when QuarterOfHourDeletedUpdate is active
+/*
+rule PowerPlantProfileFkQuarterOfHour
+	salience -999
+when
+	$e: PowerPlantProfile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: QuarterOfHour(deleted == false) from $e.quarterOfHours
+then
+	warnings.rejectValue("PowerPlantProfile","deleted","fkDenyDelete",$fk);
+end
+*/
+
+rule PowerPlantProfileFkPowerPlant
+	salience -999
+when
+	$e: PowerPlantProfile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("PowerPlantProfile","deleted","fkDenyDelete",$fk);
+end
+
+rule LegalPersonFkPowerPlant
+	salience -999
+when
+	$e: LegalPerson(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlant(deleted == false) from $e.powerPlants
+then
+	warnings.rejectValue("LegalPerson","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiMaxLoadMWSeasonFkPowerPlantProfile
+	salience -999
+when
+	$e: LoiMaxLoadMWSeason(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlantProfile(deleted == false) from $e.powerPlantProfiles
+then
+	warnings.rejectValue("LoiMaxLoadMWSeason","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiMaxLoadWeatherFkPowerPlantProfile
+	salience -999
+when
+	$e: LoiMaxLoadWeather(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PowerPlantProfile(deleted == false) from $e.powerPlantProfiles
+then
+	warnings.rejectValue("LoiMaxLoadWeather","deleted","fkDenyDelete",$fk);
+end
+
+rule QuarterOfHourValueRange
+	salience -999
+when
+	$e: QuarterOfHour((value < 0 || value > 100) && (validationEvent.startsWith("beforeCreate") ||  validationEvent.startsWith("beforeSave")))
+then
+	warnings.rejectValue("PowerPlant","value","denyQuarterOfHourValue",null);
+end
+
+rule PowerPlantProtocolSendMail when
+ 	 $e: PowerPlantProtocol(deleted == false && loiProtocolStatus!.listOptionItemCode == LoiProtocolStatus.SIGNED_PROTOCOL && validationEvent.startsWith("before") && company != null)
+     $old: PowerPlantProtocol(deleted == false && loiProtocolStatus!.listOptionItemCode != LoiProtocolStatus.SIGNED_PROTOCOL && sendMailMessage == null) from cleanEmWrapper.getOriginalEntity($e)
+then
+
+    MailAccount mailAccount = droolsRuleProcedures.findMailAccountByDefaultAccountAndCompanyAndDeleted(true, currentUser.getCompany(), false);
+    MailTemplate mailTemplate = droolsRuleProcedures.findMailTemplateByTemplateCodeAndCompanyAndDeleted(MailTemplate.MAIL_TEMPLATE_FOR_PROTOCOLS, currentUser.getCompany(), false);
+    SecUser secUser = droolsRuleProcedures.findSecUserByNameAndDeleted("camel1", false);
+    LoiProtocolStatus loiProtocolStatus = droolsRuleProcedures.findLoiProtocolStatusByCodeAndCompanyAndDeleted(LoiProtocolStatus.SIGNED_PROTOCOL, currentUser.getCompany(), false);
+
+    List<DBFile> dbFileList = new ArrayList<>();
+	DBFile dbFilePdf = new DBFile();
+    		dbFilePdf.setName($e.getId() + "_Протокол_" + $e.getPowerPlant().getIdentificationNumber() + ".pdf");
+    		dbFilePdf.setContent($e.getPdfFile());
+    		dbFilePdf.setContentType("application/pdf");
+    		entitiesToBeSaved.add(dbFilePdf);
+
+    DBFile dbFileXLSX = new DBFile();
+       		dbFileXLSX.setName($e.getId() + "_Excel_" + $e.getPowerPlant().getIdentificationNumber() + ".xlsx");
+       		dbFileXLSX.setContent($e.getXlsxFile());
+       		dbFileXLSX.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+       		entitiesToBeSaved.add(dbFileXLSX);
+
+    		dbFileList.add(dbFileXLSX);
+    		dbFileList.add(dbFilePdf);
+
+	if(dbFileList.size() != 0) {
+		SendMailMessage mailMessage = new SendMailMessage();
+
+   		mailMessage.setFromAccount(mailAccount);
+   		mailMessage.setName(mailTemplate.getName());
+   		mailMessage.setSendMailSubject(mailTemplate.getTemplateSubject());
+   		mailMessage.setSendMailToRecipient(mailTemplate.getTemplateToRecipient());
+   		mailMessage.setSendMailContent(mailTemplate.getTemplateContent());
+   		mailMessage.setAttachments(dbFileList);
+   		mailMessage.setSent(false);
+   		mailMessage.setLastModifiedBy(secUser);
+   		mailMessage.setCompany(secUser.getCompany());
+   		entitiesToBeSaved.add(mailMessage);
+
+		insert($old);
+		modify($old){
+		setSendMailMessage(mailMessage),
+		setLoiProtocolStatus(loiProtocolStatus)
+		}
+		entitiesToBeSaved.add($old);
+
+	}
+
+end
+
+//-- PowerPlant name property is required
+//rule PowerPlantNameNull
+//	salience -999
+//when
+//	$su: PowerPlant((name == null || name.trim().isEmpty()) && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","name","notNull",null);
+//end
+
+//-- PowerPlant contractDate property is required
+//rule PowerPlantContractDateNull
+//	salience -999
+//when
+//	$su: PowerPlant(contractDate == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","contractDate","notNull",null);
+//end
+
+//-- PowerPlant term property is required
+//rule PowerPlantTermNull
+//	salience -999
+//when
+//	$su: PowerPlant(term == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","term","notNull",null);
+//end
+
+//-- PowerPlant identificationNumber property is required
+//rule PowerPlantIdentificationNumberNull
+//	salience -999
+//when
+//	$su: PowerPlant(identificationNumber == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","identificationNumber","notNull",null);
+//end
+
+//-- PowerPlant identificationNumber property is required
+//rule PowerPlantOwnerNull
+//	salience -999
+//when
+//	$su: PowerPlant(owner == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","owner","notNull",null);
+//end
+
+//-- PowerPlant contractStatus property is required
+//rule PowerPlantContractStatusNull
+//	salience -999
+//when
+//	$su: PowerPlant(contractStatus == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","contractStatus","notNull",null);
+//end
+
+//-- PowerPlant loiContractQuantity property is required
+//rule PowerPlantLoiContractQuantityNull
+//	salience -999
+//when
+//	$su: PowerPlant(loiContractQuantity == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","loiContractQuantity","notNull",null);
+//end
+
+//-- PowerPlant loiContractPrice property is required
+//rule PowerPlantLoiContractPriceNull
+//	salience -999
+//when
+//	$su: PowerPlant(loiContractPrice == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","loiContractPrice","notNull",null);
+//end
+
+//-- PowerPlant loiContractFee property is required
+//rule PowerPlantLoiContractFeeNull
+//	salience -999
+//when
+//	$su: PowerPlant(loiContractFee == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","loiContractFee","notNull",null);
+//end
+
+//-- PowerPlant loiContractProtocolCountPerMonth property is required
+//rule PowerPlantLoiProtocolCountPerMonthNull
+//	salience -999
+//when
+//	$su: PowerPlant(loiProtocolCountPerMonth == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","loiProtocolCountPerMonth","notNull",null);
+//end
+
+//-- PowerPlant loiProtocolLineCount property is required
+//rule PowerPlantLoiProtocolLineCountNull
+//	salience -999
+//when
+//	$su: PowerPlant(loiProtocolLineCount == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","loiProtocolLineCount","notNull",null);
+//end
+
+//-- PowerPlant value property is required
+//rule PowerPlantValueNull
+//	salience -999
+//when
+//	$su: PowerPlant(value == null && loiContractPrice!.listOptionItemCode == LoiContractPrice.FIX_PRICE && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","value","notNull",null);
+//end
+
+//-- PowerPlant valueSec property is required
+//rule PowerPlantValueSecNull
+//	salience -999
+//when
+//	$su: PowerPlant(valueSec == null && loiContractFee!.listOptionItemCode != LoiContractFee.NO_FEE && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","valueSec","notNull",null);
+//end
+
+//-- PowerPlant minPriceMWh property is required
+//rule PowerPlantMinPriceMWhNull
+//	salience -999
+//when
+//	$su: PowerPlant(minPriceMWh == null && loiContractQuantity!.listOptionItemCode == LoiContractQuantity.AMOUNT_PER_ELECTRICITY_METER
+//	&& loiContractPrice!.listOptionItemCode == LoiContractPrice.IBEX_PRICE
+//	&& loiContractFee!.listOptionItemCode == LoiContractFee.FEE_PERCENTAGE && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","minPriceMWh","notNull",null);
+//end
+
+//-- PowerPlant installedPowerMw property is required
+//rule PowerPlantInstalledPowerMwNull
+//	salience -999
+//when
+//	$su: PowerPlant(installedPowerMw == null && deleted == false)
+//then
+//	warnings.rejectValue("PowerPlant","installedPowerMw","notNull",null);
+//end
+
+rule LegalPersonEikValidation
+	salience -999
+when
+	$su: LegalPerson(eik != null && deleted == false && (eik.matches("[0-9]+") == false || eik != null && eik.length() > 13 || eik != null && eik.length() < 9))
+then
+     warnings.rejectValue("LegalPerson","eik","InputValidationFrom9To13Digits",null);
+end
+/*
+rule LegalPersonVatNumberValidation
+	salience -999
+when
+	$su: LegalPerson(vatNumber != null && deleted == false && (vatNumber.matches("[a-zA-Z0-9]+") == false || vatNumber.length() != 14))
+then
+	if ($su.getVatNumber().length() > 2){
+
+		if(!$su.getVatNumber().substring(0,2).equals("BG")){
+        		warnings.rejectValue("LegalPerson","vatNumber","InputValidationBG",null);
+        	} else {
+        		warnings.rejectValue("LegalPerson","vatNumber","InputValidation14LettersAndDigits",null);
+        	}
+	}
+end
+
+rule PowerPlantProducerEicValidation
+	salience -999
+when
+	$su: PowerPlant(producerEic != null && deleted == false && (producerEic.matches("[a-zA-Z0-9]+") == false || producerEic.length() != 16))
+then
+	warnings.rejectValue("PowerPlant","producerEic","InputRestriction16LettersAndDigits",null);
+end
+
+rule PowerPlantTraderEicValidation
+	salience -999
+when
+	$su: PowerPlant(traderEic != null && deleted == false && (traderEic.matches("[a-zA-Z0-9]+") == false || traderEic.length() != 16))
+then
+	warnings.rejectValue("PowerPlant","traderEic","InputRestriction16LettersAndDigits",null);
+end
+*/
+rule PowerPlantInstalledPowerMwValidation
+	salience -999
+when
+	$su: PowerPlant(installedPowerMw != null && deleted == false && installedPowerMw.scale() > 4)
+then
+	warnings.rejectValue("PowerPlant","installedPowerMw","ContentInstalledPowerMw",null);
+end
+
+rule PowerPlantIdentificationNumberValidation
+	salience -999
+when
+	$su: PowerPlant(identificationNumber != null && deleted == false)
+then
+	if($su.getIdentificationNumber().matches("[a-zA-Z0-9]+") && $su.getIdentificationNumber().length() == 33 && !$su.getIdentificationNumber().trim().substring(0,2).equals("BG")){
+    		warnings.rejectValue("PowerPlant","identificationNumber","InputValidationBG",null);
+    	} else if($su.getIdentificationNumber().matches("[a-zA-Z0-9]+") && $su.getIdentificationNumber().length() == 33 && $su.getIdentificationNumber().trim().substring(0,2).equals("BG")){
+    	// intentionally left blank to record correct data
+    	}  else if($su.getIdentificationNumber().matches("[a-zA-Z0-9]+") && $su.getIdentificationNumber().length() != 16) {
+    		warnings.rejectValue("PowerPlant","identificationNumber","InputRestriction16Or33LettersAndDigits",null);
+    	} else if (!$su.getIdentificationNumber().matches("[a-zA-Z0-9]+")){
+			warnings.rejectValue("PowerPlant","identificationNumber","InputRestriction16Or33LettersAndDigits",null);
+    	}
+end
+
+rule PowerPlantMinPriceMWhValidation
+	salience -999
+when
+	$su: PowerPlant(minPriceMWh != null && deleted == false && minPriceMWh.setScale(0, BigDecimal.ROUND_DOWN) != minPriceMWh)
+then
+	warnings.rejectValue("PowerPlant","minPriceMWh","ContentOfInteger",null);
+end
+
+rule BankAccountIbanValidation
+	salience -999
+when
+	$su: BankAccount(iban != null && deleted == false && (iban.matches("[a-zA-Z0-9]+") == false || iban.length() != 22
+	|| (iban.length() == 22 && iban.substring(0,2).equals("BG") == false)))
+then
+	String ibanCode = "";
+	String ibanBic = "";
+
+	if($su.getIban().length() > 7){
+		ibanCode = $su.getIban().trim().substring(2,4);
+		ibanBic = $su.getIban().trim().substring(4,8);
+	}
+
+	if(!$su.getIban().substring(0,2).equals("BG")){
+    		warnings.rejectValue("LegalPerson","iban","InputValidationBG",null);
+
+    	} else if(!ibanCode.matches("[0-9]+") || !ibanBic.matches("[A-Z]+")){
+    		warnings.rejectValue("BankAccount","iban","IbanInputRestriction",null);
+
+    	}  else {
+    		warnings.rejectValue("BankAccount","iban","InputRestriction22LettersAndDigits",null);
+    	}
+end
+
+rule BankAccountBicValidation
+	salience -999
+when
+	$su: BankAccount(bic != null && deleted == false && (bic.matches("[A-Z]+") == false || bic.length() != 8))
+then
+    	warnings.rejectValue("BankAccount","bic","BicInputRestriction",null);
+end
+
+rule SecUserRoleUserNull
+	salience -999
+when
+	$su: SecUserRole(user == null && deleted == false)
+then
+	warnings.rejectValue("SecUserRole","user","notNull",null);
+end
+
+rule SecUserRoleRoleNull
+	salience -999
+when
+	$su: SecUserRole(role == null && deleted == false)
+then
+	warnings.rejectValue("SecUserRole","role","notNull",null);
+end

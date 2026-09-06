@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1003.3215mm"
+   height="377.74252mm"
+   viewBox="0 0 1003.3216 377.74254"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   sodipodi:docname="companyLogo.svg">
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient4905"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#f59332;stop-opacity:1;"
+         offset="0"
+         id="stop4903" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.24748737"
+     inkscape:cx="2013.5369"
+     inkscape:cy="859.56197"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1366"
+     inkscape:window-height="705"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid28"
+       originx="10.439036"
+       originy="-15.874982" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(281.13986,121.08578)">
+    <circle
+       id="path26"
+       cx="-111.09993"
+       cy="-60.88649"
+       style="fill:#0f65aa;fill-opacity:1;stroke-width:0.39018059"
+       r="60.199291" />
+    <circle
+       id="path26-9"
+       cx="107.55155"
+       cy="-60.88649"
+       style="fill:#31a7de;fill-opacity:1;stroke-width:0.39018059"
+       r="60.199291"
+       inkscape:transform-center-x="-36.469399"
+       inkscape:transform-center-y="3.8989433e-005" />
+    <circle
+       id="path26-8"
+       cx="342.29248"
+       cy="-60.88649"
+       style="fill:#9bc84a;fill-opacity:1;stroke-width:0.39018059"
+       r="60.199291" />
+    <circle
+       id="path26-83"
+       cx="566.63733"
+       cy="-60.88649"
+       style="fill:#f59332;fill-opacity:1;stroke-width:0.39018059"
+       r="60.199291" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:326.44790649px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#0f65aa;stroke-width:0.3497656;stroke-opacity:1"
+       x="-280.33109"
+       y="260.35315"
+       id="text6371"
+       transform="scale(1.0268233,0.97387736)"><tspan
+         sodipodi:role="line"
+         x="-280.33109"
+         y="260.35315"
+         id="tspan6369"
+         style="stroke-width:0.3497656"><tspan
+           x="-280.33109"
+           y="260.35315"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:326.44790649px;font-family:'Open Sans';-inkscape-font-specification:'Open Sans Bold Italic';fill:#0f65aa;fill-opacity:1;stroke:#0f65aa;stroke-width:0.3497656;stroke-opacity:1"
+           id="tspan6367">SANTA</tspan></tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+import bg.latona.santa.entities.nepal.*;
+import bg.latona.santa.entities.person.*;
+import bg.latona.santa.entities.*;
+import bg.latona.santa.entities.security.*;
+import bg.latona.santa.entities.selfie.*;
+import java.math.BigDecimal
+import java.util.LinkedList
+import java.util.List
+import bg.latona.santa.repositories.MailAccountRepository
+import bg.latona.santa.entities.mail.MailAccount
+import bg.latona.santa.entities.mail.MailTemplate
+import bg.latona.santa.repositories.MailTemplateRepository
+import bg.latona.santa.entities.mail.SendMailMessage
+import java.util.ArrayList
+import java.util.Set
+import java.util.HashSet
+import java.util.Arrays;
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+global String validationEvent;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global Object triggerObject;
+global SecUser currentUser;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+
+
+rule AccountingPeriodIsActiveValidation
+when
+ 	 $e: AccountingPeriod(deleted == false && isActive == true && validationEvent.startsWith("beforeSave"))
+then
+	List<AccountingPeriod> accountingPeriods = droolsRuleProcedures.findAccountingPeriodByIsActiveAndDeleted(true, false);
+	if (accountingPeriods.size() == 1) {
+		warnings.rejectValue("AccountingPeriod","isActive","ActivePeriodValidation",null);
+	}
+end
+

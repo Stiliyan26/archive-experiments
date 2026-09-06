@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	WSDL (описание) на web услуги за зареждане на фактури в системата eFaktura на БОРИКА АД
+-->
+<definitions xmlns:tns="https://efaktura.bg/soap/" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:content="http://schemas.xmlsoap.org/ws/2002/04/content-type/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" name="billerFilesWebService" targetNamespace="https://efaktura.bg/soap/">
+    <wsdl:types>
+        <xsd:schema targetNamespace="https://efaktura.bg/soap/">
+            <xsd:simpleType name="AlphaNumType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:pattern value="[0-9|A-Z|a-z|А-Я|а-я]+"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="AlphaNumIDType">
+                <xsd:restriction base="tns:AlphaNumType">
+                    <xsd:maxLength value="35"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="authorizationIdType">
+                <xsd:restriction base="xsd:base64Binary"/>
+            </xsd:simpleType>
+            <xsd:simpleType name="authorizationKeyType">
+                <xsd:restriction base="xsd:base64Binary"/>
+            </xsd:simpleType>
+            <xsd:simpleType name="InvoiceNumberType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:pattern value="[0-9]{10}"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="DateType">
+                <xsd:restriction base="xsd:date">
+                    <xsd:pattern value="[0-9]{4}-[0-9]{2}-[0-9]{2}"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="errTextType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="4000"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="ResultCodeType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="OK"/>
+                    <xsd:enumeration value="VOK"/>
+                    <xsd:enumeration value="NOK"/>
+                    <xsd:enumeration value="ERR"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <!--=========================================================================-->
+            <xsd:complexType name="FileStatusType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:FileTicket"/>
+                    <xsd:element ref="tns:FileResultStatus"/>
+                    <xsd:element ref="tns:FileResultStatusText"/>
+                    <xsd:element ref="tns:FileInvoiceCount"/>
+                    <xsd:element ref="tns:FileInvoiceCommit"/>
+                    <xsd:element ref="tns:FileInvoiceAmount"/>
+                    <xsd:element ref="tns:FileInvoices"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="FileTicket" type="xsd:string"/>
+            <xsd:element name="FileResultStatus" type="xsd:string"/>
+            <xsd:element name="FileResultStatusText" type="xsd:string"/>
+            <xsd:element name="FileInvoiceCount" type="xsd:integer"/>
+            <xsd:element name="FileInvoiceCommit" type="xsd:integer"/>
+            <xsd:element name="FileInvoiceAmount" type="xsd:float"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="FileResultType">
+                <xsd:choice>
+                    <xsd:element ref="tns:Invoices" minOccurs="0"/>
+                    <xsd:element ref="tns:Documents" minOccurs="0"/>
+                </xsd:choice>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="FileInvoices" type="tns:FileResultType"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="InvoicesType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:errors"/>
+                    <xsd:element ref="tns:Attachment" minOccurs="0" maxOccurs="unbounded"/>
+                    <xsd:choice>
+                        <xsd:element ref="tns:Invoice" minOccurs="0" maxOccurs="unbounded"/>
+                        <xsd:element ref="tns:Document" minOccurs="0" maxOccurs="unbounded"/>
+                    </xsd:choice>
+                </xsd:sequence>
+                <xsd:attribute ref="tns:timestamp" use="required"/>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="Invoices" type="tns:InvoicesType"/>
+            <xsd:element name="Documents" type="tns:InvoicesType"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="AttachmentType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:FileName" minOccurs="0"/>
+                    <xsd:element ref="tns:errors" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="Attachment" type="tns:AttachmentType"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="InvoiceType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:FileName" minOccurs="0"/>
+                    <xsd:element ref="tns:InvoiceNumber" minOccurs="0"/>
+                    <xsd:element ref="tns:InvoiceDate" minOccurs="0"/>
+                    <xsd:element ref="tns:errors" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="Invoice" type="tns:InvoiceType"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="DocumentType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:FileName" minOccurs="0"/>
+                    <xsd:element ref="tns:DocumentDate" minOccurs="0"/>
+                    <xsd:element ref="tns:errors" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="Document" type="tns:DocumentType"/>
+            <!--=========================================================================-->
+            <xsd:attribute name="timestamp" type="xsd:dateTime"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="errorsType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:err" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <!--=========================================================================-->
+            <xsd:element name="errors" type="tns:errorsType"/>
+            <!--=========================================================================-->
+            <xsd:complexType name="errType">
+                <xsd:sequence>
+                    <xsd:element ref="tns:errText"/>
+                    <xsd:element ref="tns:xpath" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:element name="err" type="tns:errType"/>
+            <!--=========================================================================-->
+            <xsd:element name="errText" type="tns:errTextType"/>
+            <!--=========================================================================-->
+            <xsd:element name="xpath" type="tns:errTextType"/>
+            <!--=========================================================================-->
+            <xsd:element name="FileName" type="xsd:string"/>
+            <!--=========================================================================-->
+            <xsd:element name="InvoiceNumber" type="tns:InvoiceNumberType"/>
+            <!--=========================================================================-->
+            <xsd:element name="InvoiceDate" type="tns:DateType"/>
+            <!--=========================================================================-->
+            <xsd:element name="DocumentDate" type="tns:DateType"/>
+            <!--=========================================================================-->
+        </xsd:schema>
+    </wsdl:types>
+    <message name="uploadFileRequest">
+        <part name="authorizationId" type="tns:authorizationIdType"/>
+        <part name="authorizationKey" type="tns:authorizationKeyType"/>
+        <part name="fileName" type="xsd:base64Binary"/>
+        <part name="fileCont" type="xsd:base64Binary"/>
+    </message>
+    <message name="uploadFileResponse">
+        <part name="fileTicket" type="xsd:base64Binary"/>
+    </message>
+    <message name="getFileResultRequest">
+        <part name="authorizationId" type="tns:authorizationIdType"/>
+        <part name="authorizationKey" type="tns:authorizationKeyType"/>
+        <part name="fileTicket" type="xsd:base64Binary"/>
+    </message>
+    <message name="getFileResultResponse">
+        <part name="fileResult" type="tns:FileStatusType"/>
+    </message>
+    <message name="activateFileRequest">
+        <part name="authorizationId" type="tns:authorizationIdType"/>
+        <part name="authorizationKey" type="tns:authorizationKeyType"/>
+        <part name="fileTicket" type="xsd:base64Binary"/>
+    </message>
+    <message name="activateFileResponse">
+        <part name="operResult" type="tns:ResultCodeType"/>
+    </message>
+    <message name="cancelFileRequest">
+        <part name="authorizationId" type="tns:authorizationIdType"/>
+        <part name="authorizationKey" type="tns:authorizationKeyType"/>
+        <part name="fileTicket" type="xsd:base64Binary"/>
+    </message>
+    <message name="cancelFileResponse">
+        <part name="operResult" type="tns:ResultCodeType"/>
+    </message>
+    <message name="loadFileRequest">
+        <part name="authorizationId" type="tns:authorizationIdType"/>
+        <part name="authorizationKey" type="tns:authorizationKeyType"/>
+        <part name="activateFile" type="xsd:base64Binary"/>
+        <part name="fileName" type="xsd:base64Binary"/>
+        <part name="fileCont" type="xsd:base64Binary"/>
+    </message>
+    <message name="loadFileResponse">
+        <part name="fileResult" type="tns:FileStatusType"/>
+    </message>
+    <portType name="billerFilesWebServicePort">
+        <operation name="uploadFile">
+            <input message="tns:uploadFileRequest"/>
+            <output message="tns:uploadFileResponse"/>
+        </operation>
+        <operation name="getFileResult">
+            <input message="tns:getFileResultRequest"/>
+            <output message="tns:getFileResultResponse"/>
+        </operation>
+        <operation name="activateFile">
+            <input message="tns:activateFileRequest"/>
+            <output message="tns:activateFileResponse"/>
+        </operation>
+        <operation name="cancelFile">
+            <input message="tns:cancelFileRequest"/>
+            <output message="tns:cancelFileResponse"/>
+        </operation>
+        <operation name="loadFile">
+            <input message="tns:loadFileRequest"/>
+            <output message="tns:loadFileResponse"/>
+        </operation>
+    </portType>
+    <binding name="billerFilesWebServiceBinding" type="tns:billerFilesWebServicePort">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="uploadFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/billerFilesWebService#uploadFile"/>
+            <input>
+                <mime:multipartRelated>
+                    <mime:part>
+                        <!-- Предаване на base64 кодиран идентификатор на издателя, ключ, име на файл в тялото на SOAP съобщението -->
+                        <soap:body parts="authorizationId authorizationKey fileName" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+                    </mime:part>
+                    <mime:part>
+                        <!-- Предаване на съдържанието на файла като MIME Attachment -->
+                        <mime:content part="fileCont" type="base64Binary"/>
+                    </mime:part>
+                </mime:multipartRelated>
+            </input>
+            <output>
+                <!-- Връщане на base64 кодиран идентификатор на заредения файл -->
+                <soap:body parts="fileTicket" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </output>
+        </operation>
+        <operation name="getFileResult">
+            <soap:operation soapAction="https://efaktura.bg/soap/billerFilesWebService#getFileResult"/>
+            <input>
+                <!-- Предаване на base64 кодиран идентификатор на издателя, ключ, идентификатор на файл (получен от успешно извикване на uploadFile) в тялото на SOAP съобщението -->
+                <soap:body parts="authorizationId authorizationKey fileTicket" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </input>
+            <output>
+                <!-- Връщане на XML с резултат от обработката на заредения файл -->
+                <soap:body parts="fileResult" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </output>
+        </operation>
+        <operation name="activateFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/billerFilesWebService#activateFile"/>
+            <input>
+                <!-- Предаване на base64 кодиран идентификатор на издателя, ключ, идентификатор на файл (получен от успешно извикване на uploadFile) в тялото на SOAP съобщението -->
+                <soap:body parts="authorizationId authorizationKey fileTicket" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </input>
+            <output>
+                <!-- Връщане на потвърждение за изтриване на файла -->
+                <soap:body parts="operResult" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </output>
+        </operation>
+        <operation name="cancelFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/billerFilesWebService#cancelFile"/>
+            <input>
+                <!-- Предаване на base64 кодиран идентификатор на издателя, ключ, идентификатор на файл (получен от успешно извикване на uploadFile) в тялото на SOAP съобщението -->
+                <soap:body parts="authorizationId authorizationKey fileTicket" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </input>
+            <output>
+                <!-- Връщане на потвърждение за изтриване на файла -->
+                <soap:body parts="operResult" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </output>
+        </operation>
+        <operation name="loadFile">
+            <soap:operation soapAction="https://efaktura.bg/soap/billerFilesWebService#uploadFile"/>
+            <input>
+                <mime:multipartRelated>
+                    <mime:part>
+                        <!-- Предаване на base64 кодиран идентификатор на издателя, ключ, име на файл в тялото на SOAP съобщението -->
+                        <soap:body parts="authorizationId authorizationKey activateFile fileName" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+                    </mime:part>
+                    <mime:part>
+                        <!-- Предаване на съдържанието на файла като MIME Attachment -->
+                        <mime:content part="fileCont" type="base64Binary"/>
+                    </mime:part>
+                </mime:multipartRelated>
+            </input>
+            <output>
+                <!-- Връщане на XML с резултат от обработката на заредения файл -->
+                <soap:body parts="fileResult" use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+            </output>
+        </operation>
+    </binding>
+    <service name="billerFilesWebService">
+        <documentation>
+            <!-- Документация -->
+        </documentation>
+        <port name="billerFilesWebServicePort" binding="tns:billerFilesWebServiceBinding">
+            <soap:address location="https://efaktura.bg/soap/billerFiles.php"/>
+        </port>
+    </service>
+</definitions>

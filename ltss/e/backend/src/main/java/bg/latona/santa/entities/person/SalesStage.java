@@ -1,0 +1,44 @@
+package bg.latona.santa.entities.person;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.hibernate.envers.Audited;
+
+import bg.latona.santa.entities.CompanyRecord;
+import bg.latona.santa.entities.ManagedCompany;
+import bg.latona.santa.entities.security.SecUser;
+import lombok.Data;
+
+@Data //auto-create getters and setters
+@ToString(exclude = {"customers"}) //avoid serialization recursion by Lombok
+@EqualsAndHashCode(exclude = {"customers"}) //avoid recursion by Lombok
+@Audited
+@Entity //JPA persisted class
+@Table(uniqueConstraints=@UniqueConstraint(columnNames={"company_id", "code"})) //for all unique constraints should be put Drools UNIQUE rules too
+public class SalesStage extends CompanyRecord {
+	
+	private String name;
+	private Long code;
+
+	@JsonIgnore //avoid serialization recursion by Jackson
+	@OneToMany(mappedBy = "stage")
+	private List<Customer> customers;
+	
+	public SalesStage() {};
+	
+	public SalesStage(SecUser createdBy, Date createdDate, SecUser lastModifiedBy, Date lastModifiedDate, boolean calculateOnly, ManagedCompany company,
+			String name, Long code) {
+		super(createdBy, createdDate, lastModifiedBy, lastModifiedDate, calculateOnly, company);
+		this.name = name;
+		this.code = code;
+	}
+}

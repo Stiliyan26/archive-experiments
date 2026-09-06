@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "scheme": "acme",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "name": "react-native-demo",
+    "slug": "react-native-demo",
+    "android": {
+      "package": "com.anonymous.reactnativedemo"
+    }
+  }
+}

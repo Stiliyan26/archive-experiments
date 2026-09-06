@@ -1,0 +1,668 @@
+package bg.latona.santa;
+import java.lang.Math;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import bg.latona.santa.entities.mail.*;
+import bg.latona.santa.entities.offer.*;
+
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global LocalDate currentLocalDate;
+global SecUser currentUser;
+
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global Object triggerObject;
+
+
+rule DBFileFkMailAttachment
+	salience -999
+when
+	$e: DBFile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: MailAttachment(deleted == false) from $e.mailAttachments
+then
+	warnings.rejectValue("DBFile","deleted","fkDenyDelete",$fk);
+end
+
+rule MailMessageFkMailAttachment
+	salience -999
+when
+	$e: MailMessage(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: MailAttachment(deleted == false) from $e.mailAttachments
+then
+	warnings.rejectValue("MailMessage","deleted","fkDenyDelete",$fk);
+end
+
+rule MailAccountFkSendMailMessage
+	salience -999
+when
+	$e: MailAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: SendMailMessage(deleted == false) from $e.sendMailMessages
+then
+	warnings.rejectValue("MailAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule MailAccountDelayNull 
+	salience -999
+when
+	$rec: MailAccount(deleted == false && (delay == null || delay == 0))
+then
+	warnings.rejectValue("MailAccount","delay","notNull",null);
+end
+
+//TODO validation for MailAccount - should be no more than one default
+rule SendMailMessageDefaultAccount
+when
+	$mail: SendMailMessage(fromAccount == null && company != null)
+	$account: MailAccount(id != null) from droolsRuleProcedures.findMailAccountByDefaultAccountAndCompanyAndDeleted(true, $mail.company, false)
+then
+	modify( $mail ) {
+		setFromAccount( $account );
+	}
+	entitiesToBeSaved.add($mail);
+	warnings.add("SendMailMessage.fromAccount default", false);
+end
+
+//TODO send mail when task is assigned to you - not the best trigger at the moment
+rule TaskWatcherAddAssigned
+when
+	$t: Task(id > 0 && assigned != null && company != null && lastModifiedDate != null)
+	not TaskWatcher() from droolsRuleProcedures.findTaskWatcherByTaskAndWatcher($t,$t.assigned)
+	not SendMailMessage(name == "Известие за възложена задача #"+$t.id+" на "+$t.lastModifiedDate)
+	not SendMailMessage() from droolsRuleProcedures.findSendMailMessageByNameAndCompany(
+			"Известие за възложена задача #"+$t.id+" на "+$t.lastModifiedDate,
+			$t.company)
+then
+	TaskWatcher taskWatcher = new TaskWatcher(null, null, null, null, false, $t.getCompany(), $t, $t.getAssigned());
+	entitiesToBeSaved.add(taskWatcher);
+	insert( taskWatcher );
+	warnings.add("Add assigned as task watcher", false);
+	
+	if($t.getAssigned().getEmail() != null) {
+		SendMailMessage newMail = new SendMailMessage(null, null, null, null, false, $t.getCompany(),
+				"Известие за възложена задача #"+$t.getId()+" на "+$t.getLastModifiedDate(),
+				new ArrayList(),
+				null,
+				"CRM: Известие за възложена задача #"+$t.getId()+" "+$t.getTitle(), 
+				$t.getAssigned().getEmail(), 
+				new ArrayList(),
+				"Това писмо е изпратено автоматично от CRM системата като известие, че задача #"+$t.getId()+" "+$t.getTitle()+" беше възложена на Вас от потребител "+currentUser.getName(), 
+				new ArrayList(), 
+				false);
+		entitiesToBeSaved.add(newMail);
+		insert( newMail );
+		warnings.add("Sent 'task assigned' notification mail to watcher "+$t.getAssigned().getEmail(), false);
+	}
+end
+
+//TODO add rule for all changes in entities referencing a task
+rule TaskUpdatedEmailNotification
+	salience -999
+when
+	$t: Task(id > 0 && lastModifiedDate != null && company != null)
+	not SendMailMessage(name == "Известие за промяна по задача #"+$t.id+" на "+$t.lastModifiedDate)
+	not SendMailMessage() from droolsRuleProcedures.findSendMailMessageByNameAndCompany(
+			"Известие за промяна по задача #"+$t.id+" на "+$t.lastModifiedDate,
+			$t.company)
+	$tw: TaskWatcher(watcher.name != currentUser.getName(), watcher.email != null) from droolsRuleProcedures.findTaskWatcherByTask($t)
+then
+	SendMailMessage newMail = new SendMailMessage(null, null, null, null, false, $t.getCompany(),
+			"Известие за промяна по задача #"+$t.getId()+" на "+$t.getLastModifiedDate(),
+			new ArrayList(),
+			null,
+			"CRM: Известие за промяна по задача #"+$t.getId()+" "+$t.getTitle(), 
+			$tw.getWatcher().getEmail(), 
+			new ArrayList(),
+			"Това писмо е изпратено автоматично от CRM системата като известие, че задача #"+$t.getId()+" "+$t.getTitle()+" беше променена от потребител "+currentUser.getName(), 
+			new ArrayList(), 
+			false);
+	entitiesToBeSaved.add(newMail);
+	insert( newMail );
+	warnings.add("Sent 'task updated' notification mail to watcher "+$tw.getWatcher().getEmail(), false);
+end
+
+rule TaskCommentUpdatedEmailNotification
+	salience -999
+when
+	$tc: Comment(id > 0 && task != null && task.lastModifiedDate != null && company != null)
+	not SendMailMessage(name == "Известие за промяна по задача #"+$tc.task.id+" на "+$tc.task.lastModifiedDate)
+	not SendMailMessage() from droolsRuleProcedures.findSendMailMessageByNameAndCompany(
+			"Известие за промяна по задача #"+$tc.task.id+" на "+$tc.task.lastModifiedDate,
+			$tc.company)
+	$tw: TaskWatcher(watcher.name != currentUser.getName(), watcher.email != null) from droolsRuleProcedures.findTaskWatcherByTask($tc.task)
+then
+	SendMailMessage newMail = new SendMailMessage(null, null, null, null, false, $tc.getCompany(),
+			"Известие за промяна по задача #"+$tc.getTask().getId()+" на "+$tc.getTask().getLastModifiedDate(),
+			new ArrayList(),
+			null,
+			"CRM: Известие за промяна по задача #"+$tc.getTask().getId()+" "+$tc.getTask().getTitle(), 
+			$tw.getWatcher().getEmail(), 
+			new ArrayList(),
+			"Това писмо е изпратено автоматично от CRM системата като известие, че задача #"+$tc.getTask().getId()+" "+$tc.getTask().getTitle()+" има промяна по коментарите от потребител "+currentUser.getName(), 
+			new ArrayList(), 
+			false);
+	entitiesToBeSaved.add(newMail);
+	insert( newMail );
+	warnings.add("Sent 'comment updated' notification mail to watcher "+$tw.getWatcher().getEmail(), false);
+end
+
+rule TaskAttachmentUpdatedEmailNotification
+	salience -999
+when
+	$ta: TaskAttachment(id > 0 && task != null && task.lastModifiedDate != null && company != null)
+	not SendMailMessage(name == "Известие за промяна по задача #"+$ta.task.id+" на "+$ta.task.lastModifiedDate)
+	not SendMailMessage() from droolsRuleProcedures.findSendMailMessageByNameAndCompany(
+			"Известие за промяна по задача #"+$ta.task.id+" на "+$ta.task.lastModifiedDate,
+			$ta.company)
+	$tw: TaskWatcher(watcher.name != currentUser.getName(), watcher.email != null) from droolsRuleProcedures.findTaskWatcherByTask($ta.task)
+then
+	SendMailMessage newMail = new SendMailMessage(null, null, null, null, false, $ta.getCompany(),
+			"Известие за промяна по задача #"+$ta.getTask().getId()+" на "+$ta.getTask().getLastModifiedDate(),
+			new ArrayList(),
+			null,
+			"CRM: Известие за промяна по задача #"+$ta.getTask().getId()+" "+$ta.getTask().getTitle(), 
+			$tw.getWatcher().getEmail(), 
+			new ArrayList(),
+			"Това писмо е изпратено автоматично от CRM системата като известие, че задача #"+$ta.getTask().getId()+" "+$ta.getTask().getTitle()+" има промяна по прикачените документи от потребител "+currentUser.getName(), 
+			new ArrayList(), 
+			false);
+	entitiesToBeSaved.add(newMail);
+	insert( newMail );
+	warnings.add("Sent 'task attachment updated' notification mail to "+$tw.getWatcher().getEmail(), false);
+end
+
+//-- LegalPerson MailMessageAutomaticAttach property is required
+//rule MailMessageAutomaticAttach
+//when
+//	$mail: MailMessage(id > 0 && fromAddress != null && company != null && company.code != null)
+//	$contact: Contact() from droolsRuleProcedures.getRecognizedContact($mail.fromAddress,$mail.company.code)
+//then
+//	LegalPersonAttachment legalPersonAttachment = new LegalPersonAttachment(null, null, null, null, false, $mail.getCompany(),
+//			"Писмо: "+$mail.getMailSubject(),
+//			$contact.getPerson(),
+//			$mail);
+//	entitiesToBeSaved.add(legalPersonAttachment);
+//	insert( legalPersonAttachment );
+//	warnings.add("MailMessage automatic attach to LegalPerson", false);
+//end
+
+
+rule RemoveDeletedMailAccountFromWaitingSendMailMessages
+	salience -999
+when
+	$account: MailAccount(deleted == true, validationEvent.startsWith("after"))
+	$mail: SendMailMessage(sent == false) from droolsRuleProcedures.findSendMailMessageByFromAccount($account)
+then
+	$mail.setFromAccount( null );
+	entitiesToBeSaved.add($mail);
+	insert( $mail );
+	warnings.add("SendMailMessage.fromAccount cleared", false);
+end
+
+rule SetDefaultMailAccountToWaitingSendMailMessages
+when
+	$account: MailAccount(id != null, deleted == false, defaultAccount == true)
+	$mail: SendMailMessage() from droolsRuleProcedures.findSendMailMessageByFromAccount(null)
+then
+	$mail.setFromAccount( $account );
+	entitiesToBeSaved.add($mail);
+	insert( $mail );
+	warnings.add("SendMailMessage.fromAccount default", false);
+end
+
+rule ArticleFkOfferLine
+	salience -999
+when
+	$e: Article(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferLine(deleted == false) from $e.offerLines
+then
+	warnings.rejectValue("Article","deleted","fkDenyDelete",$fk);
+end
+
+rule OfferToClientFkOfferLine
+	salience -999
+when
+	$e: OfferToClient(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferLine(deleted == false) from $e.offerLines
+then
+	warnings.rejectValue("OfferToClient","deleted","fkDenyDelete",$fk);
+end
+
+rule OfferToClientFkOfferToClient
+	salience -999
+when
+	$e: OfferToClient(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferToClient(deleted == false) from $e.offerToClients
+then
+	warnings.rejectValue("OfferToClient","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkOfferToClient
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferToClient(deleted == false) from $e.offerToClients
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule BankAccountFkOfferToClient
+	salience -999
+when
+	$e: BankAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: OfferToClient(deleted == false) from $e.offerToClients
+then
+	warnings.rejectValue("BankAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule OfferToClientFkImportedOrder
+	salience -999
+when
+	$e: OfferToClient(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedOrder(deleted == false) from $e.importedOrders
+then
+	warnings.rejectValue("OfferToClient","deleted","fkDenyDelete",$fk);
+end
+
+rule OfferLineFkImportedOrderRow
+	salience -999
+when
+	$e: OfferLine(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ImportedOrderRow(deleted == false) from $e.importedOrderRows
+then
+	warnings.rejectValue("OfferLine","deleted","fkDenyDelete",$fk);
+end
+
+rule DirectionCategoryFkCustomer
+	salience -999
+when
+	$e: DirectionCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("DirectionCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule AreaCategoryFkCustomer
+	salience -999
+when
+	$e: AreaCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("AreaCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule BusinessCategoryFkCustomer
+	salience -999
+when
+	$e: BusinessCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("BusinessCategory","deleted","fkDenyDelete",$fk);
+end
+
+rule GeneralCategoryFkCustomer
+	salience -999
+when
+	$e: GeneralCategory(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("GeneralCategory","deleted","fkDenyDelete",$fk);
+end
+
+//-- LegalPerson typeFkLegalPerson property is required
+//rule LoiLegalPersonTypeFkLegalPerson
+//	salience -999
+//when
+//	$e: LoiLegalPersonType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+//	$fk: LegalPerson(deleted == false) from $e.legalPersonList
+//then
+//	warnings.rejectValue("LoiLegalPersonType","deleted","fkDenyDelete",$fk);
+//end
+
+rule AttachableFkLegalPersonAttachment
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: LegalPersonAttachment(deleted == false) from $e.legalPersonAttachments
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+//-- LegalPerson ContactTypeFkContact property is required
+//rule ContactTypeFkContact
+//	salience -999
+//when
+//	$e: ContactType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+//	$fk: Contact(deleted == false) from $e.contacts
+//then
+//	warnings.rejectValue("ContactType","deleted","fkDenyDelete",$fk);
+//end
+
+rule CustomerFkClientInterest
+	salience -999
+when
+	$e: Customer(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ClientInterest(deleted == false) from $e.interests
+then
+	warnings.rejectValue("Customer","deleted","fkDenyDelete",$fk);
+end
+
+rule ArticleProductFkClientInterest
+	salience -999
+when
+	$e: ArticleProduct(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ClientInterest(deleted == false) from $e.clientInterests
+then
+	warnings.rejectValue("ArticleProduct","deleted","fkDenyDelete",$fk);
+end
+
+rule SalesStageFkCustomer
+	salience -999
+when
+	$e: SalesStage(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("SalesStage","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkCustomer
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Customer(deleted == false) from $e.customers
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+//-- LegalPerson FkLegalPerson property is required
+//rule LegalStatusFkLegalPerson
+//	salience -999
+//when
+//	$e: LegalStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+//	$fk: LegalPerson(deleted == false) from $e.legalPersonList
+//then
+//	warnings.rejectValue("LegalStatus","deleted","fkDenyDelete",$fk);
+//end
+
+rule ArticleFkArticlePriceRate
+	salience -999
+when
+	$e: Article(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ArticlePriceRate(deleted == false) from $e.articlePriceRates
+then
+	warnings.rejectValue("Article","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkArticlePriceRate
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: ArticlePriceRate(deleted == false) from $e.currencyArticlePriceRates
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule AssetFkAssetAttachment
+	salience -999
+when
+	$e: Asset(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AssetAttachment(deleted == false) from $e.assetAttachments
+then
+	warnings.rejectValue("Asset","deleted","fkDenyDelete",$fk);
+end
+
+rule AttachableFkAssetAttachment
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AssetAttachment(deleted == false) from $e.assetAttachments
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+rule AssetFkAssetComment
+	salience -999
+when
+	$e: Asset(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AssetComment(deleted == false) from $e.assetComments
+then
+	warnings.rejectValue("Asset","deleted","fkDenyDelete",$fk);
+end
+
+rule DictionaryFkDictionaryClassificationPolicy
+	salience -999
+when
+	$e: Dictionary(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: DictionaryClassificationPolicy(deleted == false) from $e.dictionaryClassificationPolicies
+then
+	warnings.rejectValue("Dictionary","deleted","fkDenyDelete",$fk);
+end
+
+rule DictionaryFkDictionaryTerm
+	salience -999
+when
+	$e: Dictionary(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: DictionaryTerm(deleted == false) from $e.dictionaryTerms
+then
+	warnings.rejectValue("Dictionary","deleted","fkDenyDelete",$fk);
+end
+
+rule CompanyDepartmentFkCompanyDepartment
+	salience -999
+when
+	$e: CompanyDepartment(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: CompanyDepartment(deleted == false) from $e.companyDepartments
+then
+	warnings.rejectValue("CompanyDepartment","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkEmployee
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Employee(deleted == false) from $e.employees
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule JobPositionFkEmployee
+	salience -999
+when
+	$e: JobPosition(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Employee(deleted == false) from $e.employees
+then
+	warnings.rejectValue("JobPosition","deleted","fkDenyDelete",$fk);
+end
+
+rule CompanyDepartmentFkEmployee
+	salience -999
+when
+	$e: CompanyDepartment(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Employee(deleted == false) from $e.employees
+then
+	warnings.rejectValue("CompanyDepartment","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkEmployeeAttachment
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeAttachment(deleted == false) from $e.employeeAttachments
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule AttachableFkEmployeeAttachment
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeAttachment(deleted == false) from $e.employeeAttachments
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkEmployeeAttestation
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeAttestation(deleted == false) from $e.employeeAttestations
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkWatcherEmployeeAttestation
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeAttestation(deleted == false) from $e.employeeAttestationWatchers
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkEmployeeAttestationCertifiers
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeAttestation(deleted == false) from $e.employeeAttestationCertifiers
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule EmployeeFkEmployeeCompetence
+	salience -999
+when
+	$e: Employee(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeCompetence(deleted == false) from $e.employeeCompetences
+then
+	warnings.rejectValue("Employee","deleted","fkDenyDelete",$fk);
+end
+
+rule JobRequirementFkEmployeeCompetence
+	salience -999
+when
+	$e: JobRequirement(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeCompetence(deleted == false) from $e.employeeCompetences
+then
+	warnings.rejectValue("JobRequirement","deleted","fkDenyDelete",$fk);
+end
+
+rule DBFileFkEmployeeCompetence
+	salience -999
+when
+	$e: DBFile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: EmployeeCompetence(deleted == false) from $e.employeeCompetences
+then
+	warnings.rejectValue("DBFile","deleted","fkDenyDelete",$fk);
+end
+
+rule JobPositionFkJobPositionRequirement
+	salience -999
+when
+	$e: JobPosition(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: JobPositionRequirement(deleted == false) from $e.jobPositionRequirements
+then
+	warnings.rejectValue("JobPosition","deleted","fkDenyDelete",$fk);
+end
+
+rule JobRequirementFkJobPositionRequirement
+	salience -999
+when
+	$e: JobRequirement(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: JobPositionRequirement(deleted == false) from $e.jobPositionRequirements
+then
+	warnings.rejectValue("JobRequirement","deleted","fkDenyDelete",$fk);
+end
+
+rule BankAccountFkInvoice
+	salience -999
+when
+	$e: BankAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Invoice(deleted == false) from $e.invoices
+then
+	warnings.rejectValue("BankAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiVatExemptionReasonFkInvoice
+	salience -999
+when
+	$e: LoiVatExemptionReason(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Invoice(deleted == false) from $e.invoices
+then
+	warnings.rejectValue("LoiVatExemptionReason","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkInvoice
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Invoice(deleted == false) from $e.invoices
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+
+rule SecUserFkInvoice
+	salience -999
+when
+	$e: SecUser(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: Invoice(deleted == false) from $e.invoices
+then
+	warnings.rejectValue("SecUser","deleted","fkDenyDelete",$fk);
+end
+
+rule InvoiceFkInvoiceRow
+	salience -999
+when
+	$e: Invoice(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: InvoiceRow(deleted == false) from $e.invoiceRows
+then
+	warnings.rejectValue("Invoice","deleted","fkDenyDelete",$fk);
+end
+
+rule ArticleFkInvoiceRow
+	salience -999
+when
+	$e: Article(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: InvoiceRow(deleted == false) from $e.invoiceRows
+then
+	warnings.rejectValue("Article","deleted","fkDenyDelete",$fk);
+end
+
+rule ArticleFkPlannedIncomeOrExpense
+	salience -999
+when
+	$e: Article(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: PlannedIncomeOrExpense(deleted == false) from $e.plannedIncomeOrExpenses
+then
+	warnings.rejectValue("Article","deleted","fkDenyDelete",$fk);
+end
+
+rule AttachableFkAttachableRevenuesAndExpenses
+	salience -999
+when
+	$e: Attachable(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: AttachableRevenuesAndExpenses(deleted == false) from $e.attachableRevenuesAndExpenses
+then
+	warnings.rejectValue("Attachable","deleted","fkDenyDelete",$fk);
+end
+
+rule CurrencyFkBankAccount
+	salience -999
+when
+	$e: Currency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: BankAccount(deleted == false) from $e.bankAccounts
+then
+	warnings.rejectValue("Currency","deleted","fkDenyDelete",$fk);
+end
+

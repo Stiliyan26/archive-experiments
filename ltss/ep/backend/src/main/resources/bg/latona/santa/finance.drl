@@ -1,0 +1,4911 @@
+package bg.latona.santa;
+import java.lang.Math;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import bg.latona.santa.entities.santa.common.*;
+import bg.latona.santa.entities.santa.finance.*;
+import java.math.BigInteger
+import org.apache.commons.lang3.time.DateUtils;
+global bg.latona.santa.DroolsRepositoryValidator.Result warnings;
+
+global String validationEvent;
+global Date currentDate;
+global LocalDate currentLocalDate;
+
+global java.util.LinkedList<CommonRecord> entitiesToBeSaved;
+global bg.latona.santa.DroolsRuleProcedures droolsRuleProcedures;
+global bg.latona.santa.DroolsRuleProcedures.CleanEmWrapper cleanEmWrapper;
+global Object triggerObject;
+
+rule FChartAccountCodeNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FChartAccount","code","notNull",null);
+end
+
+rule FChartAccountOutCodeNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FChartAccount","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFChartAccount
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FChartAccount(deleted == false) from $e.fChartAccounts
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FChartAccountNameNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FChartAccount","name","notNull",null);
+end
+
+rule FChartAccountDateOpenedNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && dateOpened == null)
+then
+	warnings.rejectValue("FChartAccount","dateOpened","notNull",null);
+end
+
+rule FChartAccountDateOpenedDefault when
+	$e: FChartAccount(dateOpened == null)
+then
+	modify( $e ) {
+		setDateOpened(currentLocalDate)
+	}
+end
+
+rule FChartAccountDateClosedNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && dateClosed == null)
+then
+	warnings.rejectValue("FChartAccount","dateClosed","notNull",null);
+end
+
+rule FChartAccountIsDateClosedDefault when
+	$e: FChartAccount(dateClosed == null)
+then
+	Calendar dateClosed = Calendar.getInstance();
+	dateClosed.set(2100,1,1,0,0);
+	modify( $e ) {
+		setDateClosed(dateClosed.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+	}
+end
+
+rule FChartAccountCurrencyNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (currency == null || currency.deleted == true))
+then
+	warnings.rejectValue("FChartAccount","currency","notNull",null);
+end
+
+rule FChartAccountCurrencyDefault when
+	$e: FChartAccount(currency == null)
+	$cuyCode: CCtCurrency() from droolsRuleProcedures.findCCtCurrencyByCodeAndCompanyAndDeleted("BGN", $e.company, false)
+then
+	modify( $e ) {
+		setCurrency($cuyCode);
+	}
+end
+
+rule FChartAccountIsForeignCurrencyNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && isForeignCurrency == null)
+then
+	warnings.rejectValue("FChartAccount","isForeignCurrency","notNull",null);
+end
+
+rule FChartAccountIsForeignCurrencyDefault when
+	$e: FChartAccount(isForeignCurrency == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setIsForeignCurrency(defaultValue);
+	}
+end
+
+rule FChartAccountIsSyntheticNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (isSynthetic == null || isSynthetic.deleted == true))
+then
+	warnings.rejectValue("FChartAccount","isSynthetic","notNull",null);
+end
+
+rule LoiTypeOfFinancialAccountFkFChartAccount
+	salience -999
+when
+	$e: LoiTypeOfFinancialAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FChartAccount(deleted == false) from $e.fChartAccounts
+then
+	warnings.rejectValue("LoiTypeOfFinancialAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FChartAccountIsBalancedNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && (isBalanced == null || isBalanced.deleted == true))
+then
+	warnings.rejectValue("FChartAccount","isBalanced","notNull",null);
+end
+
+rule LoiAccountActivityTypeFkFChartAccount
+	salience -999
+when
+	$e: LoiAccountActivityType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FChartAccount(deleted == false) from $e.fChartAccounts
+then
+	warnings.rejectValue("LoiAccountActivityType","deleted","fkDenyDelete",$fk);
+end
+
+rule FChartAccountEbkRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && ebkRequired == null)
+then
+	warnings.rejectValue("FChartAccount","ebkRequired","notNull",null);
+end
+
+rule FChartAccountEbkRequiredDefault when
+	$e: FChartAccount(ebkRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setEbkRequired(defaultValue);
+	}
+end
+
+rule FChartAccountFunRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && funRequired == null)
+then
+	warnings.rejectValue("FChartAccount","funRequired","notNull",null);
+end
+
+rule FChartAccountFunRequiredDefault when
+	$e: FChartAccount(funRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setFunRequired(defaultValue);
+	}
+end
+
+rule FChartAccountPrmRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && prmRequired == null)
+then
+	warnings.rejectValue("FChartAccount","prmRequired","notNull",null);
+end
+
+rule FChartAccountPrmRequiredDefault when
+	$e: FChartAccount(prmRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setPrmRequired(defaultValue);
+	}
+end
+
+rule FChartAccountFieRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && fieRequired == null)
+then
+	warnings.rejectValue("FChartAccount","fieRequired","notNull",null);
+end
+
+rule FChartAccountFieRequiredDefault when
+	$e: FChartAccount(fieRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setFieRequired(defaultValue);
+	}
+end
+
+rule FChartAccountParRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && parRequired == null)
+then
+	warnings.rejectValue("FChartAccount","parRequired","notNull",null);
+end
+
+rule FChartAccountParRequiredDefault when
+	$e: FChartAccount(parRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setParRequired(defaultValue);
+	}
+end
+
+rule FChartAccountGteRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && gteRequired == null)
+then
+	warnings.rejectValue("FChartAccount","gteRequired","notNull",null);
+end
+
+rule FChartAccountGteRequiredDefault when
+	$e: FChartAccount(gteRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setGteRequired(defaultValue);
+	}
+end
+
+rule FChartAccountCotRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && cotRequired == null)
+then
+	warnings.rejectValue("FChartAccount","cotRequired","notNull",null);
+end
+
+rule FChartAccountCotRequiredDefault when
+	$e: FChartAccount(cotRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setCotRequired(defaultValue);
+	}
+end
+
+rule FChartAccountRe1RequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && re1Required == null)
+then
+	warnings.rejectValue("FChartAccount","re1Required","notNull",null);
+end
+
+rule FChartAccountRe1RequiredDefault when
+	$e: FChartAccount(re1Required == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setRe1Required(defaultValue);
+	}
+end
+
+rule FChartAccountRe2RequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && re2Required == null)
+then
+	warnings.rejectValue("FChartAccount","re2Required","notNull",null);
+end
+
+rule FChartAccountRe2RequiredDefault when
+	$e: FChartAccount(re2Required == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setRe2Required(defaultValue);
+	}
+end
+
+rule FChartAccountOutRequiredNull 
+	salience -999
+when
+	$su: FChartAccount(deleted == false && outRequired == null)
+then
+	warnings.rejectValue("FChartAccount","outRequired","notNull",null);
+end
+
+rule FChartAccountOutRequiredDefault when
+	$e: FChartAccount(outRequired == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setOutRequired(defaultValue);
+	}
+end
+
+rule FChartAccountFkFChartAccount
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FChartAccount(deleted == false) from $e.subAccountsList
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FJournalTypeCodeNull 
+	salience -999
+when
+	$su: FJournalType(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FJournalType","code","notNull",null);
+end
+
+rule FJournalTypeCodeTrim when
+	$se: FJournalType(code != null && code != code.trim())
+then
+	String code = $se.getCode().trim();
+		modify( $se ){
+		    setCode(code)
+		}
+end
+
+rule FJournalTypeNameNull 
+	salience -999
+when
+	$su: FJournalType(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FJournalType","name","notNull",null);
+end
+rule FJournalTypeDescrNull 
+	salience -999
+when
+	$su: FJournalType(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FJournalType","descr","notNull",null);
+end
+rule FJournalTypeTypeNull  //this rule was created because the screen "1.2.	Екран за търсене, редактиране, създаване на Счетоводни статии; ddfId="40"" does not allow it to be null.The base allows it to be null.
+	salience -999
+when
+	$su: FJournalType(deleted == false && (type == null || type.deleted == true))
+then
+	warnings.rejectValue("FJournalType","type","notNull",null);
+end
+rule FJournalTypeOutCodeNull 
+	salience -999
+when
+	$su: FJournalType(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FJournalType","outCode","notNull",null);
+end
+
+rule FJournalTypeOrganizationUnitDefault when
+	$e: FJournalType(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule FCtJteDefaultJteNull 
+	salience -999
+when
+	$su: FCtJteDefault(deleted == false && (jte == null || jte.deleted == true))
+then
+	warnings.rejectValue("FCtJteDefault","jte","notNull",null);
+end
+rule FCtJteDefaultOutCodeNull 
+	salience -999
+when
+	$su: FCtJteDefault(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtJteDefault","outCode","notNull",null);
+end
+
+
+rule FCtBatchTypeCodeNull when
+	$su: FCtBatchType(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtBatchType","code","notNull",null);
+end
+
+rule FCtBatchTypeCodeTrim when
+	$se: FCtBatchType(code != null && code != code.trim())
+then
+	String code = $se.getCode().trim();
+		modify( $se ){
+		    setCode(code)
+		}
+end
+
+rule FCtBatchTypeNameNull 
+	salience -999
+when
+	$su: FCtBatchType(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtBatchType","name","notNull",null);
+end
+rule FCtBatchTypeDescrNull 
+	salience -999
+when
+	$su: FCtBatchType(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtBatchType","descr","notNull",null);
+end
+rule FCtBatchTypeIsDdsNull 
+	salience -999
+when
+	$su: FCtBatchType(deleted == false && isDds == null)
+then
+	warnings.rejectValue("FCtBatchType","isDds","notNull",null);
+end
+
+rule FCtBatchTypeTypeNoTrim when
+	$se: FCtBatchType(typeNo != null && typeNo != typeNo.trim())
+then
+	String typeNo = $se.getTypeNo().trim();
+		modify( $se ){
+		    setTypeNo(typeNo)
+		}
+end
+
+
+rule FDiscountDiscountNull 
+	salience -999
+when
+	$su: FDiscount(deleted == false && discount == null)
+then
+	warnings.rejectValue("FDiscount","discount","notNull",null);
+end
+
+
+rule FCtBatchTypeIsDdsDefault when
+	$e: FCtBatchType(isDds == null)
+then
+	Boolean defaultValue = false;
+	modify( $e ) {
+		setIsDds(defaultValue);
+	}
+end
+
+rule CCcOrganizationUnitFkFCtJteDefault
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtJteDefault(deleted == false) from $e.fCtJteDefaults
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkFDiscount
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FDiscount(deleted == false) from $e.fDiscounts
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkFJournalType
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FJournalType(deleted == false) from $e.fJournalTypes
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiJournalTypeCalculationTypeFkFJournalType
+	salience -999
+when
+	$e: LoiJournalTypeCalculationType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FJournalType(deleted == false) from $e.fJournalTypes
+then
+	warnings.rejectValue("LoiJournalTypeCalculationType","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiBatchCalculationTypeFkFCtBatchType
+	salience -999
+when
+	$e: LoiBatchCalculationType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchType(deleted == false) from $e.fCtBatchTypes
+then
+	warnings.rejectValue("LoiBatchCalculationType","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiBatchJteDefaultSideFkFCtBatchType
+	salience -999
+when
+	$e: LoiBatchJteDefaultSide(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchType(deleted == false) from $e.fCtBatchTypes
+then
+	warnings.rejectValue("LoiBatchJteDefaultSide","deleted","fkDenyDelete",$fk);
+end
+
+rule FJournalTypeFkFCtJteDefault
+	salience -999
+when
+	$e: FJournalType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtJteDefault(deleted == false) from $e.fCtJteDefaults
+then
+	warnings.rejectValue("FJournalType","deleted","fkDenyDelete",$fk);
+end
+
+rule FChartAccountFkFCtJteDefault
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtJteDefault(deleted == false) from $e.fCtJteDefaults
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FChartAccountFkCoaCtFCtJteDefault
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtJteDefault(deleted == false) from $e.coaCtFCtJteDefaults
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtRepresentativeOutCodeNull
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtRepresentative","outCode","notNull",null);
+end
+
+rule FCtRepresentativeOrganizationUnitDefault when
+	$e: FCtRepresentative(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule CCcOrganizationUnitFkFCtRepresentative
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtRepresentative(deleted == false) from $e.fCtRepresentatives
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFCtRepresentative
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtRepresentative(deleted == false) from $e.fCtRepresentatives
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiRepresentativeTypeFkFCtRepresentative
+	salience -999
+when
+	$e: LoiRepresentativeType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtRepresentative(deleted == false) from $e.fCtRepresentatives
+then
+	warnings.rejectValue("LoiRepresentativeType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtRepresentativeIdeNoNull
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (ideNo == null || ideNo.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRepresentative","ideNo","notNull",null);
+end
+
+rule FCtRepresentativeNameNull
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRepresentative","name","notNull",null);
+end
+
+rule FCtRepresentativeCityNull
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (city == null || city.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRepresentative","city","notNull",null);
+end
+
+rule FCtRepresentativeТypeNull //this rule was created because the screen "1.5.	Екран за търсене, редактиране, създаване на Представляващи лица; ddfId="143" does not allow it to be null.The base allows it to be null.
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (type == null || type.deleted == true))
+then
+	warnings.rejectValue("FCtRepresentative","type","notNull",null);
+end
+
+rule FCtRepresentativePositionNull //this rule was created because the screen "1.5.	Екран за търсене, редактиране, създаване на Представляващи лица; ddfId="143" does not allow it to be null.The base allows it to be null.
+	salience -999
+when
+	$su: FCtRepresentative(deleted == false && (position == null || position.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRepresentative","position","notNull",null);
+end
+
+rule FInvDdsFileOutCodeNull
+	salience -999
+when
+	$su: FInvDdsFile(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FInvDdsFile","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFInvDdsFile
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvDdsFile(deleted == false) from $e.fInvDdsFiles
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtRepresentativeFkFInvDdsFile
+	salience -999
+when
+	$e: FCtRepresentative(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvDdsFile(deleted == false) from $e.fInvDdsFiles
+then
+	warnings.rejectValue("FCtRepresentative","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvDdsFilePeriodNull
+	salience -999
+when
+	$su: FInvDdsFile(deleted == false && (period == null || period.trim().isEmpty()))
+then
+	warnings.rejectValue("FInvDdsFile","period","notNull",null);
+end
+
+rule FInvDdsFileReeIdNull
+	salience -999
+when
+	$su: FInvDdsFile(deleted == false && (reeId == null || reeId.deleted == true))
+then
+	warnings.rejectValue("FInvDdsFile","reeId","notNull",null);
+end
+
+rule FInvDdsFileStatusNull
+	salience -999
+when
+	$su: FInvDdsFile(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FInvDdsFile","status","notNull",null);
+end
+
+rule LoiInvDdsFileStatusFkFInvDdsFile
+	salience -999
+when
+	$e: LoiInvDdsFileStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvDdsFile(deleted == false) from $e.fInvDdsFiles
+then
+	warnings.rejectValue("LoiInvDdsFileStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleOutCodeNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtBatchTypeRule
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleOrderNumNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && orderNum == null)
+then
+	warnings.rejectValue("FCtBatchTypeRule","orderNum","notNull",null);
+end
+
+rule FCtBatchTypeRuleAmountTypeNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (amountType == null || amountType.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","amountType","notNull",null);
+end
+
+rule LoiBatchTypeRuleAmountTypeFkFCtBatchTypeRule
+	salience -999
+when
+	$e: LoiBatchTypeRuleAmountType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("LoiBatchTypeRuleAmountType","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiBatchTypeRuleDependenceTypeFkFCtBatchTypeRule
+	salience -999
+when
+	$e: LoiBatchTypeRuleDependenceType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("LoiBatchTypeRuleDependenceType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleActiveFromDateNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCtBatchTypeRule","activeFromDate","notNull",null);
+end
+
+rule FCtBatchTypeRuleActiveFromDateDefault when
+	$e: FCtBatchTypeRule(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCtBatchTypeRuleActiveToDateNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCtBatchTypeRule","activeToDate","notNull",null);
+end
+
+rule FCtBatchTypeRuleActiveToDateDefault when
+	$e: FCtBatchTypeRule(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCtBatchTypeRuleTteIdNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (tteId == null || tteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","tteId","notNull",null);
+end
+
+rule FCtTransitionTypeFkFCtBatchTypeRule
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleRueIdNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (rueId == null || rueId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","rueId","notNull",null);
+end
+
+rule FCtRuleFkFCtBatchTypeRule
+	salience -999
+when
+	$e: FCtRule(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("FCtRule","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleJteIdNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (jteId == null || jteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","jteId","notNull",null);
+end
+
+rule FJournalTypeFkFCtBatchTypeRule
+	salience -999
+when
+	$e: FJournalType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.fCtBatchTypeRules
+then
+	warnings.rejectValue("FJournalType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleCoaIdCtNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (coaIdCt == null || coaIdCt.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","coaIdCt","notNull",null);
+end
+
+rule FChartAccountFkCoaIdCtFCtBatchTypeRule
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.coaIdCtfCtBatchTypeRules
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleCoaIdDtNull
+	salience -999
+when
+	$su: FCtBatchTypeRule(deleted == false && (coaIdDt == null || coaIdDt.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTypeRule","coaIdDt","notNull",null);
+end
+
+rule FChartAccountFkCoaIdDtFCtBatchTypeRule
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTypeRule(deleted == false) from $e.coaIdDtfCtBatchTypeRules
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeRuleUpdateDependenceIdFake when
+	$e: FCtBatchTypeRule(dependenceIdFake != null && validationEvent.startsWith("beforeCreate") && company != null)
+	$loi: LoiBatchTypeRuleDependenceType() from droolsRuleProcedures.findLoiBatchTypeRuleDependenceTypeByListOptionItemCodeAndCompanyAndDeleted($e.dependenceTypeStringToCode($e.dependenceIdFake.substring(0,3)), $e.company, false)
+then
+	Long newDependenceIdInt = Long.valueOf($e.getDependenceIdFake().substring(3));
+	modify( $e ) {
+		setDependenceId(newDependenceIdInt),
+		setDependenceType($loi)
+	}
+end
+
+rule FCtBatchTypeRuleActiveToDateCheck when
+	$e: FCtBatchTypeRule(deleted == false && activeFromDate != null && activeToDate != null && activeFromDate.compareTo(activeToDate) > 0)
+then
+	warnings.rejectValue("FCtBatchTypeRule","activeToDate","dateError",null);
+end
+
+rule FCtBatchTypeRuleCheckRule when
+	$e: FCtBatchTypeRule(deleted == false && activeFromDate != null && activeToDate != null
+			&& outCode != null && tteId != null && rueId != null && orderNum != null && company != null
+		)
+	$btr: FCtBatchTypeRule(
+			(
+				(activeFromDate.compareTo($e.activeFromDate) < 0) && (activeToDate.compareTo($e.activeFromDate) > 0) 
+				|| (activeFromDate.compareTo($e.activeToDate) < 0) && (activeToDate.compareTo($e.activeToDate) > 0)
+			)
+			&& id != $e.id
+		) from droolsRuleProcedures.findFCtBatchTypeRuleByOutCodeAndTteIdAndRueIdAndOrderNumAndDependenceTypeAndDependenceIdAndCompanyAndDeleted($e.outCode,$e.tteId,$e.rueId,$e.orderNum,$e.dependenceType,$e.dependenceId,$e.company,false)
+then
+	warnings.rejectValue("FCtBatchTypeRule","orderNum","checkRuleError",null);
+end
+
+rule FCtBatchTypeRuleTransactionCheck when
+	$e: FCtBatchTypeRule(deleted == false && activeFromDate != null && activeToDate != null
+			&& outCode != null && tteId != null && rueId != null && company != null
+		)
+	$btr: FCtBatchTypeRule(
+			(
+				(activeFromDate.compareTo($e.activeFromDate) < 0) && (activeToDate.compareTo($e.activeFromDate) > 0) 
+				|| (activeFromDate.compareTo($e.activeToDate) < 0) && (activeToDate.compareTo($e.activeToDate) > 0)
+			)
+			&& rueId != $e.rueId 
+			&& id != $e.id 
+		) from droolsRuleProcedures.findFCtBatchTypeRuleByOutCodeAndTteIdAndCompanyAndDeleted($e.outCode, $e.tteId, $e.company,false)
+then
+	warnings.rejectValue("FCtBatchTypeRule","rueId","transactionCheckError",null);
+end
+
+rule FCtBatchTypeRuleActivePeriodCheck when
+	$e: FCtBatchTypeRule(deleted == false && activeFromDate != null && activeToDate != null
+			&& outCode != null && tteId != null && rueId != null && company != null
+		)
+	$btr: FCtBatchTypeRule(
+			((activeFromDate.compareTo($e.activeFromDate) != 0) || (activeToDate.compareTo($e.activeToDate) != 0))
+			&& orderNum != $e.orderNum
+			&& id != $e.id
+		) from droolsRuleProcedures.findFCtBatchTypeRuleByOutCodeAndTteIdAndRueIdAndDependenceTypeAndDependenceIdAndCompanyAndDeleted($e.outCode,$e.tteId,$e.rueId,$e.dependenceType,$e.dependenceId,$e.company,false)
+then
+	warnings.rejectValue("FCtBatchTypeRule","activeFromDate","activePeriodError",null);
+end
+
+rule FCtBatchTypeRuleDependenceTypeCheck when
+	$e: FCtBatchTypeRule(deleted == false && dependenceType != null && dependenceIdFake == null)
+then
+	warnings.rejectValue("FCtBatchTypeRule","dependenceType","dependenceTypeError",null);
+end
+
+rule FCtBatchTypeRuleCheckCCtPartnerGroupId when
+	$e: FCtBatchTypeRule(deleted == false && dependenceType!.listOptionItemCode == LoiBatchTypeRuleDependenceType.BATCH_TYPE_RULE_DEPENDENCE_TYPE_PRT)
+	$prt: CCtPartnerGroup(deleted == false && !(
+			(activeFrom.compareTo($e.activeFromDate) < 0) 
+			&& (activeTo.compareTo($e.activeFromDate) > 0) 
+			&& (activeFrom.compareTo($e.activeToDate) < 0) 
+			&& (activeTo.compareTo($e.activeToDate) > 0)
+		)) from droolsRuleProcedures.findCCtPartnerGroupByIdAndCompanyAndDeleted($e.dependenceId, $e.company, false)
+then
+	warnings.rejectValue("FCtBatchTypeRule","dependenceType","partnerGroupIdError",null);
+end
+
+rule FCtBatchTypeRuleCheckCCtCCtBankAccountId when
+	$e: FCtBatchTypeRule(deleted == false && dependenceType!.listOptionItemCode == LoiBatchTypeRuleDependenceType.BATCH_TYPE_RULE_DEPENDENCE_TYPE_BAK)
+	$cba: CCtBankAccount(!(
+			(activeFrom.compareTo($e.activeFromDate) < 0) 
+			&& (activeTo.compareTo($e.activeFromDate) > 0) 
+			&& (activeFrom.compareTo($e.activeToDate) < 0) 
+			&& (activeTo.compareTo($e.activeToDate) > 0)
+		)) from droolsRuleProcedures.findCCtBankAccountByIdAndCompanyAndDeleted($e.dependenceId, $e.company, false)
+then
+	warnings.rejectValue("FCtBatchTypeRule","dependenceType","bankAccountIdError",null);
+end
+
+rule FCtRuleCodeNull
+	salience -999
+when
+	$su: FCtRule(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRule","code","notNull",null);
+end
+
+rule FCtRuleNameNull
+	salience -999
+when
+	$su: FCtRule(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRule","name","notNull",null);
+end
+
+rule FCtRuleExpressionNull
+	salience -999
+when
+	$su: FCtRule(deleted == false && (expression == null || expression.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRule","expression","notNull",null);
+end
+
+rule FCtRuleDescrNull
+	salience -999
+when
+	$su: FCtRule(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtRule","descr","notNull",null);
+end
+
+rule FCtRuleOutCodeNull
+	salience -999
+when
+	$su: FCtRule(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtRule","outCode","notNull",null);
+end
+
+rule FCtRuleOrganizationUnitDefault when
+	$e: FCtRule(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule CCcOrganizationUnitFkFCtRule
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtRule(deleted == false) from $e.fCtRules
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTteTypeOutCodeNull
+	salience -999
+when
+	$su: FCtBatchTteType(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteType","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtBatchTteType
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteType(deleted == false) from $e.fCtBatchTteTypes
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtTransitionTypeFkFCtBatchTteType
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteType(deleted == false) from $e.fCtBatchTteTypes
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeFkFCtBatchTteType
+	salience -999
+when
+	$e: FCtBatchType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteType(deleted == false) from $e.fCtBatchTteTypes
+then
+	warnings.rejectValue("FCtBatchType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTteTypeTteIdNull
+	salience -999
+when
+	$su: FCtBatchTteType(deleted == false && (tteId == null || tteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteType","tteId","notNull",null);
+end
+
+rule FCtBatchTteTypeBteIdNull
+	salience -999
+when
+	$su: FCtBatchTteType(deleted == false && (bteId == null || bteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteType","bteId","notNull",null);
+end
+
+rule FCtBatchTteLinkOutCodeNull
+	salience -999
+when
+	$su: FCtBatchTteLink(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteLink","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtBatchTteLink
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteLink(deleted == false) from $e.fCtBatchTteLinks
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtInvDealTypeFkFCtBatchTteLink
+	salience -999
+when
+	$e: FCtInvDealType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteLink(deleted == false) from $e.fCtBatchTteLinks
+then
+	warnings.rejectValue("FCtInvDealType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTteLinkTteIdeNull
+	salience -999
+when
+	$su: FCtBatchTteLink(deleted == false && (tteId == null || tteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteLink","tteId","notNull",null);
+end
+
+rule FCtTransitionTypeFkFCtBatchTteLink
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteLink(deleted == false) from $e.fCtBatchTteLinks
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTypeFkFCtBatchTteLink
+	salience -999
+when
+	$e: FCtBatchType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteLink(deleted == false) from $e.fCtBatchTteLinks
+then
+	warnings.rejectValue("FCtBatchType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTteLinkStatusNull
+	salience -999
+when
+	$su: FCtBatchTteLink(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FCtBatchTteLink","status","notNull",null);
+end
+
+rule FCtBatchTteLinkStatusDefault when
+	$e: FCtBatchTteLink(status == null)
+	$status: LoiBatchTteLinkStatus() from droolsRuleProcedures.findLoiBatchTteLinkStatusByCodeAndCompanyAndDeleted(LoiBatchTteLinkStatus.BATCH_TTE_RULE_LINK_STATUS_A, $e.company, false)
+then
+	modify( $e ) {
+		setStatus( $status );
+	}
+end
+
+rule LoiBatchTteLinkStatusFkFCtBatchTteLink
+	salience -999
+when
+	$e: LoiBatchTteLinkStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchTteLink(deleted == false) from $e.fCtBatchTteLinks
+then
+	warnings.rejectValue("LoiBatchTteLinkStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchTteLinkActiveFromDateNull
+	salience -999
+when
+	$su: FCtBatchTteLink(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCtBatchTteLink","activeFromDate","notNull",null);
+end
+
+rule FCtBatchTteLinkActiveFromDateDefault when
+	$e: FCtBatchTteLink(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCtBatchTteLinkActiveToDateNull
+	salience -999
+when
+	$su: FCtBatchTteLink(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCtBatchTteLink","activeToDate","notNull",null);
+end
+
+rule FCtBatchTteLinkActiveToDateDefault when
+	$e: FCtBatchTteLink(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCtBatchTteLinkOrderNumDefault when
+	$e: FCtBatchTteLink(orderNum == null)
+then
+	Integer defaultValue = 1;
+    	modify( $e ) {
+    		setOrderNum(defaultValue);
+    	}
+end
+
+rule FCtBatchJteDefaultBteIdNull
+	salience -999
+when
+	$su: FCtBatchJteDefault(deleted == false && (bteId == null || bteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchJteDefault","bteId","notNull",null);
+end
+
+rule FCtBatchTypeFkFCtBatchJteDefault
+	salience -999
+when
+	$e: FCtBatchType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchJteDefault(deleted == false) from $e.fCtBatchJteDefaults
+then
+	warnings.rejectValue("FCtBatchType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchJteDefaultOutCodeNull
+	salience -999
+when
+	$su: FCtBatchJteDefault(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtBatchJteDefault","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtBatchJteDefault
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchJteDefault(deleted == false) from $e.fCtBatchJteDefaults
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchJteDefaultJteIdNull
+	salience -999
+when
+	$su: FCtBatchJteDefault(deleted == false && (jteId == null || jteId.deleted == true))
+then
+	warnings.rejectValue("FCtBatchJteDefault","jteId","notNull",null);
+end
+
+rule FJournalTypeFkFCtBatchJteDefault
+	salience -999
+when
+	$e: FJournalType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchJteDefault(deleted == false) from $e.fCtBatchJteDefaults
+then
+	warnings.rejectValue("FJournalType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtBatchJteDefaultSideNull
+	salience -999
+when
+	$su: FCtBatchJteDefault(deleted == false && (side == null || side.deleted == true))
+then
+	warnings.rejectValue("FCtBatchJteDefault","side","notNull",null);
+end
+
+rule LoiBatchJteDefaultSideFkFCtBatchJteDefault
+	salience -999
+when
+	$e: LoiBatchJteDefaultSide(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtBatchJteDefault(deleted == false) from $e.fCtBatchJteDefaults
+then
+	warnings.rejectValue("LoiBatchJteDefaultSide","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtGoodCodeNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtGood","code","notNull",null);
+end
+
+rule FCtGoodOutCodeNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtGood","outCode","notNull",null);
+end
+
+rule FCtGoodOrganizationUnitDefault when
+	$e: FCtGood(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule CCcOrganizationUnitFkFCtGood
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtGood(deleted == false) from $e.fCtGoods
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtGoodDescrNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtGood","descr","notNull",null);
+end
+
+rule FCtGoodGteIdNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && (gteId == null || gteId.deleted == true))
+then
+	warnings.rejectValue("FCtGood","gteId","notNull",null);
+end
+
+rule CCcGoodsTypeFkFCtGood
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtGood(deleted == false) from $e.fCtGoods
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtGoodActiveFromDateNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCtGood","activeFromDate","notNull",null);
+end
+
+rule FCtGoodActiveFromDateDefault when
+	$e: FCtGood(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCtGoodActiveToDateNull
+	salience -999
+when
+	$su: FCtGood(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCtGood","activeToDate","notNull",null);
+end
+
+rule FCtGoodActiveToDateDefault when
+	$e: FCtGood(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FPtJournalBahIdNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (bahId == null || bahId.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","bahId","notNull",null);
+end
+
+rule FPtBatchFkFPtJournal
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalPostDateNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && postDate == null)
+then
+	warnings.rejectValue("FPtJournal","postDate","notNull",null);
+end
+
+//check_post_date_journal
+rule FPtJournalPostDateFuture
+	salience -999
+when
+	$e: FPtJournal(deleted == false && postDate > currentLocalDate)
+then
+	warnings.rejectValue("FPtJournal","postDate","futureDate",$e.getPostDate());
+end
+
+rule FPtJournalOutCodeNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFPtJournal
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalOutCodeDefault
+when
+	$e: FPtJournal(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule FPtJournalStatusNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","status","notNull",null);
+end
+
+rule LoiPtJournalStatusFkFPtJournal
+	salience -999
+when
+	$e: LoiPtJournalStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("LoiPtJournalStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalStatusDefault
+when
+	$e: FPtJournal(outCode == null && company != null)
+	$st: LoiPtJournalStatus() from droolsRuleProcedures.findLoiPtJournalStatusByCodeAndCompanyAndDeleted(LoiPtJournalStatus.PT_JOURNAL_STATUS_C, $e.company, false)
+then
+	modify( $e ) {
+		setStatus( $st )
+	}
+end
+
+rule FPtJournalJournalNoNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && journalNo == null)
+then
+	warnings.rejectValue("FPtJournal","journalNo","notNull",null);
+end
+
+rule FPtJournalJournalNoDefault
+when
+	$e: FPtJournal(journalNo == null)
+then
+	//misc.get_next_number_no_year (extract(year from new.post_date)::varchar, 'JOL', new.out_code,'N');
+	Long newLongNum = droolsRuleProcedures.getMaxAutoIncNum($e);
+	Integer newNum = newLongNum == null ? null : Math.toIntExact(newLongNum);
+	modify( $e ) {
+		setJournalNo( newNum );
+	}
+	warnings.add($e.getClass().getName()+".journalNo default"+newNum, false);
+end
+
+rule FPtJournalFkFPtJournal
+	salience -999
+when
+	$e: FPtJournal(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("FPtJournal","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalCcStatusNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (ccStatus == null || ccStatus.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","ccStatus","notNull",null);
+end
+
+rule FPtJournalCcStatusDefault when
+	$e: FPtJournal(ccStatus == null && company != null)
+	$status: LoiPtJournalCcStatus() from droolsRuleProcedures.findLoiPtJournalCcStatusByCodeAndCompanyAndDeleted(LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_U, $e.company, false)
+then
+	modify( $e ) {
+		setCcStatus( $status );
+	}
+end
+
+rule FPtJournalDescrDefault when
+	$e: FPtJournal(descr == null && bahId != null)
+then
+	modify( $e ) {
+		setDescr( $e.getBahId().getDescr() );
+	}
+end
+
+rule LoiPtJournalCcStatusFkFPtJournal
+	salience -999
+when
+	$e: LoiPtJournalCcStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("LoiPtJournalCcStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalCuyCodeNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","cuyCode","notNull",null);
+end
+
+rule FPtJournalCuyCodeDefault when
+	$e: FPtJournal(cuyCode == null && company != null)
+	$cuyCode: CCtCurrency() from droolsRuleProcedures.findCCtCurrencyByCodeAndCompanyAndDeleted("BGN", $e.company, false) //TODO check if it should be the default currency
+then
+	modify( $e ) {
+		setCuyCode($cuyCode);
+	}
+end
+
+rule CCtCurrencyFkFPtJournal
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtJournalCuyRateNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && cuyRate == null)
+then
+	warnings.rejectValue("FPtJournal","cuyRate","notNull",null);
+end
+
+rule FPtJournalCuyRateDefault when
+	$e: FPtJournal(cuyRate == null && company != null)
+then
+	CPmtCurrencyRate pmtRate = droolsRuleProcedures.findCPmtCurrencyRateByCuyCodeAndDateFromLessThanEqualAndDateToGreaterThanEqualAndCompanyAndDeleted($e.getCuyCode(), $e.getPostDate(), $e.getCompany(), false);
+	if( pmtRate != null ) {
+		modify( $e ) {
+			setCuyRate(pmtRate.getInMainCuy()),
+			setCuyUnit(pmtRate.getUnitOfCuy())
+		}
+	} else {
+		modify( $e ) {
+			setCuyRate(BigDecimal.ZERO),
+			setCuyUnit(0)
+		}
+	}
+end
+
+rule FPtJournalCuyUnitNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && cuyUnit == null)
+then
+	warnings.rejectValue("FPtJournal","cuyUnit","notNull",null);
+end
+
+rule FPtJournalCuyUnitDefault when
+	$e: FPtJournal(cuyUnit == null)
+then
+	modify( $e ) {
+		setCuyUnit(1);
+	}
+end
+
+rule FPtJournalJteIdNull
+	salience -999
+when
+	$su: FPtJournal(deleted == false && (jteId == null || jteId.deleted == true))
+then
+	warnings.rejectValue("FPtJournal","jteId","notNull",null);
+end
+
+rule FJournalTypeFkFPtJournal
+	salience -999
+when
+	$e: FJournalType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtJournal(deleted == false) from $e.fPtJournals
+then
+	warnings.rejectValue("FJournalType","deleted","fkDenyDelete",$fk);
+end
+
+//set_post_date_out_code_pog
+rule FPtJournalUpdateOutCodeFPtPosting when
+	$e: FPtJournal(outCode != null && company != null && validationEvent.startsWith("beforeSave"))
+	$old: FPtJournal(outCode != $e.outCode) from cleanEmWrapper.getOriginalEntity($e)
+	$fpt: FPtPosting() from $e.fPtPostings
+then
+	insert( $fpt );
+	modify( $fpt ){
+		setOutCode($e.getOutCode())
+	}
+end
+
+//set_post_date_in_postings
+//set_post_date_out_code_pog
+rule FPtJournalUpdatePostDateFPtPosting when
+	$e: FPtJournal(postDate != null && company != null && validationEvent.startsWith("beforeSave"))
+	$old: FPtJournal(postDate != $e.postDate) from cleanEmWrapper.getOriginalEntity($e)
+	$fpt: FPtPosting() from $e.fPtPostings
+then
+	insert( $fpt );
+	modify( $fpt ){
+		setPostDate($e.getPostDate())
+	}
+end
+
+//set_post_date_out_code_pog
+rule FPtJournalCalculationFPtPostingAmount when
+	$e: FPtJournal(deleted == false && company != null && validationEvent.startsWith("beforeSave"))
+	$old: FPtJournal(status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_C 
+		&& ($e.status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_C || $e.status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_V) 
+		&& (cuyCode != $e.cuyCode || cuyRate != $e.cuyRate || cuyUnit != $e.cuyUnit)) from cleanEmWrapper.getOriginalEntity($e)
+	$fpt: FPtPosting() from $e.fPtPostings
+then
+	insert( $fpt );
+	Integer intCuyUnit = $e.getCuyUnit();
+	BigDecimal cuyUnit = BigDecimal.valueOf(intCuyUnit);
+	BigDecimal round = $fpt.getAmountCurrency().multiply($e.getCuyRate().divide(cuyUnit)).setScale(2, BigDecimal.ROUND_HALF_UP);
+
+	modify( $fpt ){
+		setAmount(round)
+	}
+end
+
+rule FPtJournalDisabledUpdate when
+	$e: FPtJournal(deleted == false && company != null && validationEvent.startsWith("beforeSave"))
+	FPtJournal(deleted == false && jteId!.type.listOptionItemCode != LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_E //Крайно салдо
+			&& ! ( 
+					(status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S) //Осчетоводен, Сторниран
+					&& ccStatus.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_P //Обработен
+					&& bahId == $e.bahId 
+					&& (postDate.month == $e.postDate.month && postDate.year == $e.postDate.year) 
+					&& outCode == $e.outCode 
+					&& status == $e.status 
+					&& journalNo == $e.journalNo 
+					&& stornoJolId == $e.stornoJolId 
+					&& ccStatus == $e.ccStatus 
+					&& cuyCode == $e.cuyCode 
+					&& cuyRate == $e.cuyRate 
+					&& cuyUnit == $e.cuyUnit 
+					&& (jteId != $e.jteId && (jteId!.type == $e.jteId!.type) 
+						|| descr != $e.descr 
+						|| descr == $e.descr
+					)
+				)
+			&& ! ! (status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S) //Осчетоводен, Сторниран
+			&& ! (
+				(status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S) //Осчетоводен, Сторниран
+				&& ccStatus.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_U //В процес на обработка
+				&& $e.ccStatus.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_P //Обработен
+			)
+			&& ! (
+				status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P //Осчетоводен
+				&& $e.status.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S //Сторниран
+				&& stornoJolId == null
+			)
+		) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FPtJournal","code","cannotChangeJournal",null);
+end
+
+rule FPtJournalDisabledDelete when
+	$e: FPtJournal(validationEvent.startsWith("beforeDelete") && company != null)
+	$old: FPtJournal(deleted == false && (status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S)
+		&& ccStatus.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_P && jteId!.type!.listOptionItemCode != LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_E) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FPtJournal","code","cannotChangeJournal",null);
+end
+
+//sql:select 'Не може да се редактира Счетоводна статия със статус Осчетоводен' from pt_journals jol where jol.status = 'P' and coalesce(<<jol.jol_tab_id>>,-1) = jol.id;";"validator - if status of jurnals is P do not change
+rule FPtJournalNoChangeAfterPosting when
+	$e: FPtJournal(id == triggerObject#CommonRecord.id && validationEvent.startsWith("before"))
+	$old: FPtJournal(deleted == false && status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FPtJournal","code","cannotChangeJournal",null);
+end
+
+//validate_batch_closing_accounts
+rule FPtJournalValidateBatchClosingAccounts
+	salience -999
+when
+	$e: FPtJournal(deleted == false && bahId != null)
+	$fk: FPtClosingAccount(deleted == false) from $e.bahId.fPtClosingAccounts
+then
+	warnings.rejectValue("FPtJournal","bahId","journalLocked",null);
+end
+
+//validate_new_batch_closing_acc
+rule FPtJournalValidateNewBatchClosingAccStart
+	salience -999
+when
+	$e: FPtJournal(deleted == false && outCode != null && company != null && jteId!.type!.listOptionItemCode == LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_S)
+	$month: LoiPtClosingAccountPeriodMonth() from droolsRuleProcedures.findLoiPtClosingAccountPeriodMonthByCodeAndCompanyAndDeleted(LoiPtClosingAccountPeriodMonth.PT_CLOSING_ACCOUNT_PERIOD_MONTH_CK_12,$e.company,false)
+	$ca: FPtClosingAccount() from droolsRuleProcedures.findFPtClosingAccountByOutCodeAndPeriodAndCompanyAndDeleted($e.outCode,$month,String.valueOf($e.postDate.getYear()-1),$e.company,false)
+then
+	warnings.rejectValue("FPtJournal","outCode","journalLockedByClosingAccount",$e.getOutCode());
+	warnings.rejectValue("FPtJournal","postDate","journalLockedByClosingAccount",$e.getPostDate());
+	warnings.rejectValue("FPtJournal","jteId","journalLockedByClosingAccount",$e.getJteId());
+end
+
+//validate_new_batch_closing_acc
+rule FPtJournalValidateNewBatchClosingAccEnd
+	salience -999
+when
+	$e: FPtJournal(deleted == false && outCode != null && company != null && jteId!.type!.listOptionItemCode == LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_E)
+	$month: LoiPtClosingAccountPeriodMonth() from droolsRuleProcedures.findLoiPtClosingAccountPeriodMonthByCodeAndCompanyAndDeleted(LoiPtClosingAccountPeriodMonth.PT_CLOSING_ACCOUNT_PERIOD_MONTH_CK_12,$e.company,false)
+	$ca: FPtClosingAccount() from droolsRuleProcedures.findFPtClosingAccountByOutCodeAndPeriodAndCompanyAndDeleted($e.outCode,$month,String.valueOf($e.postDate.getYear()),$e.company,false)
+then
+	warnings.rejectValue("FPtJournal","outCode","journalLockedByClosingAccount",$e.getOutCode());
+	warnings.rejectValue("FPtJournal","postDate","journalLockedByClosingAccount",$e.getPostDate());
+	warnings.rejectValue("FPtJournal","jteId","journalLockedByClosingAccount",$e.getJteId());
+end
+
+
+rule FCtContractTypeCodeNull
+	salience -999
+when
+	$su: FCtContractType(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtContractType","code","notNull",null);
+end
+
+rule FCtContractTypeOutCodeNull
+	salience -999
+when
+	$su: FCtContractType(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtContractType","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtContractType
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtContractType(deleted == false) from $e.fCtContractTypes
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtContractTypeNameNull
+	salience -999
+when
+	$su: FCtContractType(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtContractType","name","notNull",null);
+end
+
+rule FCcContractOutCodeNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcContract","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcContract
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcContract(deleted == false) from $e.fCcContracts
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractCodeNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcContract","code","notNull",null);
+end
+
+rule FCcContractNameNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcContract","name","notNull",null);
+end
+
+rule FCcContractParIdNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && (parId == null || parId.deleted == true))
+then
+	warnings.rejectValue("FCcContract","parId","notNull",null);
+end
+
+rule CCcPartnerFkFCcContract
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcContract(deleted == false) from $e.fCcContracts
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractActiveFromDateNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcContract","activeFromDate","notNull",null);
+end
+
+rule FCcContractActiveFromDateDefault when
+	$e: FCcContract(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcContractActiveToDateNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcContract","activeToDate","notNull",null);
+end
+
+rule FCcContractActiveToDateDefault when
+	$e: FCcContract(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcContractContractDateNull
+	salience -999
+when
+	$su: FCcContract(deleted == false && contractDate == null)
+then
+	warnings.rejectValue("FCcContract","contractDate","notNull",null);
+end
+
+rule FCcContractContractDateDefault when
+	$e: FCcContract(contractDate == null)
+then
+	modify( $e ) {
+		setContractDate( currentLocalDate );
+	}
+end
+
+rule FCtContractTypeFkFCcContract
+	salience -999
+when
+	$e: FCtContractType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcContract(deleted == false) from $e.fCcContracts
+then
+	warnings.rejectValue("FCtContractType","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchPostDateNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && postDate == null)
+then
+	warnings.rejectValue("FPtBatch","postDate","notNull",null);
+end
+
+rule FPtBatchOutCodeNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtBatch","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFPtBatch
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchModuleNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && (module == null || module.trim().isEmpty()))
+then
+	warnings.rejectValue("FPtBatch","module","notNull",null);
+end
+
+rule FPtBatchRefNoNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && (refNo == null || refNo.trim().isEmpty()))
+then
+	warnings.rejectValue("FPtBatch","refNo","notNull",null);
+end
+
+rule FPtBatchRefDateNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && refDate == null)
+then
+	warnings.rejectValue("FPtBatch","refDate","notNull",null);
+end
+
+rule FPtBatchAmountNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && amount == null)
+then
+	warnings.rejectValue("FPtBatch","amount","notNull",null);
+end
+
+rule FPtBatchAmountOutstandingNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && amountOutstanding == null)
+then
+	warnings.rejectValue("FPtBatch","amountOutstanding","notNull",null);
+end
+
+rule FPtBatchBteIdNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && (bteId == null || bteId.deleted == true))
+then
+	warnings.rejectValue("FPtBatch","bteId","notNull",null);
+end
+
+rule FCtBatchTypeFkFPtBatch
+	salience -999
+when
+	$e: FCtBatchType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("FCtBatchType","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvDdsFileFkFPtBatch
+	salience -999
+when
+	$e: FInvDdsFile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("FInvDdsFile","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvDdsFileFkdfeId2FPtBatch
+	salience -999
+when
+	$e: FInvDdsFile(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.dfeId2FPtBatches
+then
+	warnings.rejectValue("FInvDdsFile","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFPtBatch
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtInvDealTypeFkFPtBatch
+	salience -999
+when
+	$e: FCtInvDealType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("FCtInvDealType","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCuyCodeNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FPtBatch","cuyCode","notNull",null);
+end
+
+rule FPtBatchCuyCodeDefault when
+	$e: FPtBatch(cuyCode == null)
+	$cuyCode: CCtCurrency() from droolsRuleProcedures.findCCtCurrencyByCodeAndCompanyAndDeleted("BGN", $e.company, false)
+then
+	modify( $e ) {
+		setCuyCode($cuyCode);
+	}
+end
+
+rule CCtCurrencyFkFPtBatch
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatch(deleted == false) from $e.fPtBatches
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCuyRateNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && cuyRate == null)
+then
+	warnings.rejectValue("FPtBatch","cuyRate","notNull",null);
+end
+
+rule FPtBatchCuyRateDefault when
+	$e: FPtBatch(company != null && cuyCode != null)
+then
+	BigDecimal newRate = BigDecimal.ONE;
+	if( $e.getCuyCode() != null ) {
+		CPmtCurrencyRate pmtRate = droolsRuleProcedures.findCPmtCurrencyRateByCuyCodeAndDateFromLessThanEqualAndDateToGreaterThanEqualAndCompanyAndDeleted($e.getCuyCode(), currentLocalDate, $e.getCompany(), false);
+		if( pmtRate != null && pmtRate.getInMainCuy() != null && pmtRate.getUnitOfCuy() != null) {
+			newRate = pmtRate.getInMainCuy().divide( new BigDecimal(pmtRate.getUnitOfCuy()) );
+			if($e.getCuyRate() == null || newRate.compareTo($e.getCuyRate()) != 0) {
+				modify( $e ) {
+					setCuyRate(newRate),
+					setCuyUnit(pmtRate.getUnitOfCuy())
+				}
+			}
+		}
+	}
+	if($e.getCuyRate() == null || newRate.compareTo($e.getCuyRate()) != 0) {
+		modify( $e ) {
+			setCuyRate(newRate)
+		}
+	}
+end
+
+rule FPtBatchCuyUnitNull
+	salience -999
+when
+	$su: FPtBatch(deleted == false && cuyUnit == null)
+then
+	warnings.rejectValue("FPtBatch","cuyUnit","notNull",null);
+end
+
+rule FPtBatchCuyUnitDefault when
+	$e: FPtBatch(cuyUnit == null)
+then
+	Integer defaultValue = 1;
+	modify( $e ) {
+		setCuyUnit(defaultValue);
+	}
+end
+
+rule FPtBatchIdeIdNull
+	salience -999
+when
+	$e: FPtBatch(deleted == false && bteId!.isDds == true && ideId == null)
+then
+	warnings.rejectValue("FPtBatch","ideId","notNull",null);
+end
+
+rule FPtBatchAmount2Null
+	salience -999
+when
+	$e: FPtBatch(deleted == false && bteId!.isDds == true && amount2 == null)
+then
+	warnings.rejectValue("FPtBatch","amount2","notNull",null);
+end
+
+rule FPtBatchAmount3Null
+	salience -999
+when
+	$e: FPtBatch(deleted == false && bteId!.isDds == true && amount3 == null)
+then
+	warnings.rejectValue("FPtBatch","amount3","notNull",null);
+end
+
+rule FPtBatchParIdNull
+	salience -999
+when
+	$e: FPtBatch(deleted == false && bteId!.isDds == true && parId == null)
+then
+	warnings.rejectValue("FPtBatch","parId","notNull",null);
+end
+
+rule FPtBatchDescrNull
+	salience -999
+when
+	$e: FPtBatch(deleted == false && bteId!.isDds == true && descr == null)
+then
+	warnings.rejectValue("FPtBatch","descr","notNull",null);
+end
+
+rule FPtBatchUniqueInvoice
+	salience -999
+when
+	$new: FPtBatch(company != null 
+		&& bteId != null && bteId.isDds == true 
+		&& ideId != null)
+	$old: FPtBatch(id != $new.id && ideId!.side == $new.ideId!.side) from droolsRuleProcedures.findFPtBatchByPostDateAndOutCodeAndRefNoAndBteIdAndParIdAndCompanyAndDeleted($new.postDate, $new.outCode, $new.refNo, $new.bteId, $new.parId, $new.company, false)
+then
+	warnings.rejectValue($new.getClass().getSimpleName(),"uniqueness","notUnique",$old);
+end
+
+rule FPtBatchAmount3CurrencyCalc when
+	$e: FPtBatch(amount2Currency != null && ideId!.percentVat != null)
+	$old: FPtBatch($e.amount3Currency == null  || amount2Currency != $e.amount2Currency || ideId!.percentVat != $e.ideId!.percentVat) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amount3Currency = $e.getAmount2Currency().multiply($e.getIdeId().getPercentVat().divide(new BigDecimal(100))).setScale(2,BigDecimal.ROUND_HALF_UP);
+	if($e.getAmount3Currency() == null || $e.getAmount3Currency().compareTo(amount3Currency) != 0) {
+		modify( $e ) {
+			setAmount3Currency(amount3Currency);
+		}
+	}
+end
+
+rule FPtBatchAmountCurrencyCalc when
+	$e: FPtBatch(amount2Currency != null && amount3Currency != null)
+	$old: FPtBatch($e.amountCurrency == null  || amount2Currency != $e.amount2Currency || amount3Currency != $e.amount3Currency) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amountCurrency = $e.getAmount2Currency().add($e.getAmount3Currency());
+	if($e.getAmountCurrency() == null || $e.getAmountCurrency().compareTo(amountCurrency) != 0) {
+		modify( $e ) {
+			setAmountCurrency(amountCurrency);
+		}
+	}
+end
+
+rule FPtBatchAmount2Calc when
+	$e: FPtBatch(cuyRate != null && cuyUnit != null && amount2Currency != null)
+	$old: FPtBatch($e.amount2 == null || cuyRate != $e.cuyRate || cuyUnit != $e.cuyUnit || amount2Currency != $e.amount2Currency) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amount2 = $e.getCuyRate().divide(new BigDecimal($e.getCuyUnit())).multiply($e.getAmount2Currency()).setScale(2,BigDecimal.ROUND_HALF_UP);
+	if($e.getAmount2() == null || $e.getAmount2().compareTo(amount2) != 0) {
+		modify( $e ) {
+			setAmount2(amount2);
+		}
+	}
+end
+
+rule FPtBatchAmount3Calc when
+	$e: FPtBatch(cuyRate != null && cuyUnit != null && amount3Currency != null)
+	$old: FPtBatch($e.amount3 == null || cuyRate != $e.cuyRate || cuyUnit != $e.cuyUnit || amount3Currency != $e.amount3Currency) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amount3 = $e.getCuyRate().divide(new BigDecimal($e.getCuyUnit())).multiply($e.getAmount3Currency()).setScale(2,BigDecimal.ROUND_HALF_UP);
+	if($e.getAmount3() == null || $e.getAmount3().compareTo(amount3) != 0) {
+		modify( $e ) {
+			setAmount3(amount3);
+		}
+	}
+end
+
+rule FPtBatchAmountCalc when
+	$e: FPtBatch(cuyRate != null && cuyUnit != null && amountCurrency != null)
+	$old: FPtBatch($e.amount == null || cuyRate != $e.cuyRate || cuyUnit != $e.cuyUnit || amountCurrency != $e.amountCurrency) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amount = $e.getCuyRate().divide(new BigDecimal($e.getCuyUnit())).multiply($e.getAmountCurrency()).setScale(2,BigDecimal.ROUND_HALF_UP);
+	if($e.getAmount() == null || $e.getAmount().compareTo(amount) != 0) {
+		modify( $e ) {
+			setAmount(amount);
+		}
+	}
+end
+
+rule FPtBatchAmountOutstandingCalc when
+	$e: FPtBatch(cuyRate != null && cuyUnit != null && amountOutstandingCurrency != null)
+	$old: FPtBatch($e.amountOutstanding == null || cuyRate != $e.cuyRate || cuyUnit != $e.cuyUnit || amountOutstandingCurrency != $e.amountOutstandingCurrency) from cleanEmWrapper.getOriginalEntity($e)
+then
+	BigDecimal amountOutstanding = $e.getCuyRate().divide(new BigDecimal($e.getCuyUnit())).multiply($e.getAmountOutstandingCurrency()).setScale(2,BigDecimal.ROUND_HALF_UP);
+	if($e.getAmountOutstanding() == null || $e.getAmountOutstanding().compareTo(amountOutstanding) != 0) {
+		modify( $e ) {
+			setAmountOutstanding(amountOutstanding);
+		}
+	}
+end
+
+//validate_batch_closing_accounts
+rule FPtBatchValidateBatchClosingAccounts
+	salience -999
+when
+	$e: FPtBatch()
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("FPtBatch","fPtClosingAccounts","batchLocked",null);
+end
+
+
+rule FCcEbkOutCodeNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcEbk","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcEbk
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcEbk(deleted == false) from $e.fCcEbks
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkCodeNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcEbk","code","notNull",null);
+end
+
+rule FCcEbkNameNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcEbk","name","notNull",null);
+end
+
+rule FCcEbkEbkGroupNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && (ebkGroup == null || ebkGroup.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcEbk","ebkGroup","notNull",null);
+end
+
+rule FCcEbkFkFCcEbk
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcEbk(deleted == false) from $e.fCcEbks
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkActiveFromDateNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcEbk","activeFromDate","notNull",null);
+end
+
+rule FCcEbkActiveFromDateDefault when
+	$e: FCcEbk(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcEbkActiveToDateNull
+	salience -999
+when
+	$su: FCcEbk(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcEbk","activeToDate","notNull",null);
+end
+
+rule FCcEbkActiveToDateDefault when
+	$e: FCcEbk(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcFinsourceOutCodeNull
+	salience -999
+when
+	$su: FCcFinsource(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcFinsource","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcFinsource
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcFinsource(deleted == false) from $e.fCcFinsources
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceCodeNull
+	salience -999
+when
+	$su: FCcFinsource(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcFinsource","code","notNull",null);
+end
+
+rule FCcFinsourceNameNull
+	salience -999
+when
+	$su: FCcFinsource(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcFinsource","name","notNull",null);
+end
+
+rule FCcFinsourceActiveFromDateNull
+	salience -999
+when
+	$su: FCcFinsource(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcFinsource","activeFromDate","notNull",null);
+end
+
+rule FCcFinsourceActiveFromDateDefault when
+	$e: FCcFinsource(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcFinsourceActiveToDateNull
+	salience -999
+when
+	$su: FCcFinsource(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcFinsource","activeToDate","notNull",null);
+end
+
+rule FCcFinsourceActiveToDateDefault when
+	$e: FCcFinsource(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcFunctionOutCodeNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcFunction","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcFunction
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcFunction(deleted == false) from $e.fCcFunctions
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionCodeNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcFunction","code","notNull",null);
+end
+
+rule FCcFunctionNameNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcFunction","name","notNull",null);
+end
+
+rule FCcFunctionDescrNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcFunction","descr","notNull",null);
+end
+
+rule FCcFunctionFkFCcFunction
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcFunction(deleted == false) from $e.fCcFunctions
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionActiveFromDateNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && (activeFromDate == null))
+then
+	warnings.rejectValue("FCcFunction","activeFromDate","notNull",null);
+end
+
+rule FCcFunctionActiveFromDateDefault when
+	$e: FCcFunction(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcFunctionActiveToDateNull
+	salience -999
+when
+	$su: FCcFunction(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcFunction","activeToDate","notNull",null);
+end
+
+rule FCcFunctionActiveToDateDefault when
+	$e: FCcFunction(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcProgramOutCodeNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcProgram","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcProgram
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcProgram(deleted == false) from $e.fCcPrograms
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramCodeNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcProgram","code","notNull",null);
+end
+
+rule FCcProgramNameNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcProgram","name","notNull",null);
+end
+
+rule FCcProgramDescrNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && (descr == null || descr.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcProgram","descr","notNull",null);
+end
+
+rule FCcProgramFkFCcProgram
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcProgram(deleted == false) from $e.fCcPrograms
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramActiveFromDateNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcProgram","activeFromDate","notNull",null);
+end
+
+rule FCcProgramActiveFromDateDefault when
+	$e: FCcProgram(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcProgramActiveToDateNull
+	salience -999
+when
+	$su: FCcProgram(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcProgram","activeToDate","notNull",null);
+end
+
+rule FCcProgramActiveToDateDefault when
+	$e: FCcProgram(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcReserve1OutCodeNull
+	salience -999
+when
+	$su: FCcReserve1(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcReserve1","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcReserve1
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcReserve1(deleted == false) from $e.fCcReserve1s
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFCcReserve1
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcReserve1(deleted == false) from $e.fCcReserve1s
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1NameNull
+	salience -999
+when
+	$su: FCcReserve1(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcReserve1","name","notNull",null);
+end
+
+rule FCcReserve1CodeNull
+	salience -999
+when
+	$su: FCcReserve1(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcReserve1","code","notNull",null);
+end
+
+rule FCcReserve1ActiveFromDateNull
+	salience -999
+when
+	$su: FCcReserve1(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcReserve1","activeFromDate","notNull",null);
+end
+
+rule FCcReserve1ActiveFromDateDefault when
+	$e: FCcReserve1(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcReserve1ActiveToDateNull
+	salience -999
+when
+	$su: FCcReserve1(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcReserve1","activeToDate","notNull",null);
+end
+
+rule FCcReserve1ActiveToDateDefault when
+	$e: FCcReserve1(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+rule FCcReserve2OutCodeNull
+	salience -999
+when
+	$su: FCcReserve2(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCcReserve2","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCcReserve2
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCcReserve2(deleted == false) from $e.fCcReserve2s
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2NameNull
+	salience -999
+when
+	$su: FCcReserve2(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcReserve2","name","notNull",null);
+end
+
+rule FCcReserve2CodeNull
+	salience -999
+when
+	$su: FCcReserve2(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCcReserve2","code","notNull",null);
+end
+
+rule FCcReserve2ActiveFromDateNull
+	salience -999
+when
+	$su: FCcReserve2(deleted == false && activeFromDate == null)
+then
+	warnings.rejectValue("FCcReserve2","activeFromDate","notNull",null);
+end
+
+rule FCcReserve2ActiveFromDateDefault when
+	$e: FCcReserve2(activeFromDate == null)
+then
+	modify( $e ) {
+		setActiveFromDate( currentLocalDate );
+	}
+end
+
+rule FCcReserve2ActiveToDateNull
+	salience -999
+when
+	$su: FCcReserve2(deleted == false && activeToDate == null)
+then
+	warnings.rejectValue("FCcReserve2","activeToDate","notNull",null);
+end
+
+rule FCcReserve2ActiveToDateDefault when
+	$e: FCcReserve2(activeToDate == null)
+then
+	modify( $e ) {
+		setActiveToDate( LocalDate.of(2100,1,1) );
+	}
+end
+
+
+//TODO make this rule to work for the accountingAggregateJournals status change of the FPtPosting
+//rule FPtPostingJournalLock
+//	salience -999
+//when
+//	$e: FPtPosting(jolId!.status!.listOptionItemCode != LoiPtJournalStatus.PT_JOURNAL_STATUS_C  && validationEvent.startsWith("before"))
+//then
+//	warnings.rejectValue("FPtPosting","jolId","cannotChangeJournal",null);
+//end
+
+//check_posting
+rule FPtPostingJolIdeNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && (jolId == null || jolId.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","jolId","notNull",null);
+end
+
+rule FPtJournalFkFPtPosting
+	salience -999
+when
+	$e: FPtJournal(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FPtJournal","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtPostingPostDateNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && postDate == null)
+then
+	warnings.rejectValue("FPtPosting","postDate","notNull",null);
+end
+
+//check_posting
+rule FPtPostingOutCodeNull
+	salience -999
+when
+	$e: FPtPosting(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","outCode","notNull",null);
+end
+
+//check_posting
+rule FPtPostingOutCodeNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && outCode != null && !(outCode.activeFrom <= jolId.postDate && jolId.postDate <= outCode.activeTo))
+then
+	warnings.rejectValue("FPtPosting","outCode","notValidForDate",null);
+end
+
+rule CCcOrganizationUnitFkFPtPosting
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingAmountNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && amount == null)
+then
+	warnings.rejectValue("FPtPosting","amount","notNull",null);
+end
+
+rule FPtPostingAmountDefaultAndCalc when
+	$e: FPtPosting(amountCurrency != null && jolId != null && jolId.cuyRate != null && jolId.cuyUnit != null)
+then
+	FPtPosting old = (FPtPosting) cleanEmWrapper.getOriginalEntity($e);
+	if($e.getAmount() == null || old == null || old != null && old.getAmountCurrency() != null && $e.getAmountCurrency().compareTo(old.getAmountCurrency()) != 0) {
+		BigDecimal amount = ($e.getJolId().getCuyRate().divide(new BigDecimal($e.getJolId().getCuyUnit()))).multiply($e.getAmountCurrency());
+		if($e.getAmount() == null || amount.compareTo($e.getAmount()) != 0) {
+			modify( $e ) {
+				setAmount( amount )
+			}
+		}
+	}
+end
+
+//check_posting
+rule FPtPostingAmountCurrencyNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && amountCurrency == null)
+then
+	warnings.rejectValue("FPtPosting","amountCurrency","notNull",null);
+end
+
+rule FPtPostingAmountCurrencyDefault when
+	$e: FPtPosting(amountCurrency == null && jolId != null && jolId.bahId != null)
+	accumulate(
+		$pt: FPtPosting(id != $e.id, deleted != true, $amountCurrency: amountCurrency) from $e.jolId.fPtPostings; 
+		$sumRows: sum($amountCurrency),
+		$countRows: count()
+	)
+then
+	BigDecimal amount = $e.getJolId().getBahId().getAmount2Currency();
+	if($countRows > 0) {
+		amount = $e.getJolId().getBahId().getAmountCurrency().subtract($sumRows);
+	}
+	
+	modify( $e ) {
+		setAmountCurrency( amount )
+	}
+end
+
+rule FPtPostingCoaStatusNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && (coaStatus == null || coaStatus.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","coaStatus","notNull",null);
+end
+
+rule FPtPostingCoaStatusDefault when
+	$e: FPtPosting(coaStatus == null && company != null)
+	$status: LoiPtPostingCoaStatus() from droolsRuleProcedures.findLoiPtPostingCoaStatusByCodeAndCompanyAndDeleted(LoiPtPostingCoaStatus.PT_POSTING_COA_STATUS_U, $e.company, false)
+then
+	modify( $e ) {
+		setCoaStatus( $status );
+	}
+end
+
+rule LoiPtPostingCoaStatusFkFPtPosting
+	salience -999
+when
+	$e: LoiPtPostingCoaStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("LoiPtPostingCoaStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtPostingCcStatusNull
+	salience -999
+when
+	$su: FPtPosting(deleted == false && (ccStatus == null || ccStatus.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","ccStatus","notNull",null);
+end
+
+rule FPtPostingCcStatusDefault when
+	$e: FPtPosting(ccStatus == null && company != null)
+	$status: LoiPtPostingCcStatus() from droolsRuleProcedures.findLoiPtPostingCcStatusByCodeAndCompanyAndDeleted(LoiPtPostingCcStatus.PT_POSTING_CC_STATUS_U, $e.company, false)
+then
+	modify( $e ) {
+		setCcStatus( $status );
+	}
+end
+
+rule LoiPtPostingCcStatusFkFPtPosting
+	salience -999
+when
+	$e: LoiPtPostingCcStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("LoiPtPostingCcStatus","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCoaIdCtNull
+	salience -999
+when
+	$e: FPtPosting(deleted == false && (coaIdCt == null || coaIdCt.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","coaIdCt","notNull",null);
+end
+
+//check_posting
+rule FPtPostingCoaIdCtNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && coaIdCt != null && !(coaIdCt.dateOpened <= jolId.postDate && jolId.postDate <= coaIdCt.dateClosed) )
+then
+	warnings.rejectValue("FPtPosting","coaIdCt","notValidForDate",null);
+end
+
+//check_posting
+rule FPtPostingCoaIdCtNotAnalytic
+	salience -999
+when
+	$e: FPtPosting(deleted == false && coaIdCt != null)
+	$fk: FChartAccount(deleted == false) from $e.coaIdCt.subAccountsList
+then
+	warnings.rejectValue("FPtPosting","coaIdCt","notAnalyticAccount",null);
+end
+
+rule FPtPostingCoaIdCtDefault when
+	$e: FPtPosting(coaIdCt == null && jolId != null && jolId.jteId != null && company != null)
+	$jte: FCtJteDefault() from droolsRuleProcedures.findFCtJteDefaultByJteAndOutCodeAndCompanyAndDeleted($e.jolId.jteId, $e.jolId.outCode, $e.company, false)
+then
+	modify( $e ) {
+		setCoaIdCt( $jte.getCoaCt() );
+	}
+end
+
+rule FChartAccountFkFPtPosting
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCoaIdDtNull
+	salience -999
+when
+	$e: FPtPosting(deleted == false && (coaIdDt == null || coaIdDt.deleted == true))
+then
+	warnings.rejectValue("FPtPosting","coaIdDt","notNull",null);
+end
+
+//check_posting
+rule FPtPostingCoaIdDtNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && coaIdDt != null && !(coaIdDt.dateOpened <= jolId.postDate && jolId.postDate <= coaIdDt.dateClosed) )
+then
+	warnings.rejectValue("FPtPosting","coaIdDt","notValidForDate",null);
+end
+
+//check_posting
+rule FPtPostingCoaIdDtNotAnalytic
+	salience -999
+when
+	$e: FPtPosting(coaIdDt != null)
+	$fk: FChartAccount(deleted == false) from $e.coaIdDt.subAccountsList
+then
+	warnings.rejectValue("FPtPosting","coaIdDt","notAnalyticAccount",null);
+end
+
+rule FPtPostingCoaIdDtDefault when
+	$e: FPtPosting(coaIdDt == null && jolId != null && jolId.jteId != null && company != null)
+	$jte: FCtJteDefault() from droolsRuleProcedures.findFCtJteDefaultByJteAndOutCodeAndCompanyAndDeleted($e.jolId.jteId, $e.jolId.outCode, $e.company, false)
+then
+	modify( $e ) {
+		setCoaIdDt( $jte.getCoaDt() );
+	}
+end
+
+rule FChartAccountFkCoaIdDtFPtPostings
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.coaIdDtFPtPostings
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcEbkIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccEbkId != null && !(ccEbkId.activeFromDate <= jolId.postDate && jolId.postDate <= ccEbkId.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccEbkId","notValidForDate",null);
+end
+
+rule FCcEbkFkFPtPostings
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcFunIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccFunId != null && !(ccFunId.activeFromDate <= jolId.postDate && jolId.postDate <= ccFunId.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccFunId","notValidForDate",null);
+end
+
+rule FCcFunctionFkFPtPostings
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcPrmIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccPrmId != null && !(ccPrmId.activeFromDate <= jolId.postDate && jolId.postDate <= ccPrmId.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccPrmId","notValidForDate",null);
+end
+
+rule FCcProgramFkFPtPostings
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcFieIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccFieId != null && !(ccFieId.activeFromDate <= jolId.postDate && jolId.postDate <= ccFieId.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccFieId","notValidForDate",null);
+end
+
+rule FCcFinsourceFkFPtPostings
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcParIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccParId != null && !(ccParId.activeFrom <= jolId.postDate && jolId.postDate <= ccParId.activeTo ) )
+then
+	warnings.rejectValue("FPtPosting","ccParId","notValidForDate",null);
+end
+
+rule CCcPartnerFkFPtPostings
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcGteIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccGteId != null && !(ccGteId.activeFrom <= jolId.postDate && jolId.postDate <= ccGteId.activeTo) )
+then
+	warnings.rejectValue("FPtPosting","ccGteId","notValidForDate",null);
+end
+
+rule CCcGoodsTypeFkFPtPostings
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcCotIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccCotId != null && !(ccCotId.activeFromDate <= jolId.postDate && jolId.postDate <= ccCotId.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccCotId","notValidForDate",null);
+end
+
+rule FCcContractFkFPtPostings
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcOutIdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccOutId != null && !(ccOutId.activeFrom <= jolId.postDate && jolId.postDate <= ccOutId.activeTo ) )
+then
+	warnings.rejectValue("FPtPosting","ccOutId","notValidForDate",null);
+end
+
+rule CCcOrganizationUnitFkCcOutIdFPtPostings
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.ccOutIdFPtPostings
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcRe1IdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccRe1Id != null && !(ccRe1Id.activeFromDate <= jolId.postDate && jolId.postDate <= ccRe1Id.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccRe1Id","notValidForDate",null);
+end
+
+rule FCcReserve1FkFPtPostings
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingCcRe2IdNotValidForDate
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId != null && ccRe2Id != null && !(ccRe2Id.activeFromDate <= jolId.postDate && jolId.postDate <= ccRe2Id.activeToDate) )
+then
+	warnings.rejectValue("FPtPosting","ccRe2Id","notValidForDate",null);
+end
+
+rule FCcReserve2FkFPtPostings
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtPosting(deleted == false) from $e.fPtPostings
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+//check_posting
+rule FPtPostingRequiredCostCenterCoaIdCt
+	salience -999
+when
+	$e: FPtPosting(deleted == false && coaIdCt != null && (
+			(coaIdCt.outRequired == true) && ccOutId == null
+			|| (coaIdCt.ebkRequired == true) && ccEbkId == null
+			|| (coaIdCt.funRequired == true) && ccFunId == null
+			|| (coaIdCt.prmRequired == true) && ccPrmId == null
+			|| (coaIdCt.fieRequired == true) && ccFieId == null
+			|| (coaIdCt.parRequired == true) && ccParId == null
+			|| (coaIdCt.gteRequired == true) && ccGteId == null
+			|| (coaIdCt.cotRequired == true) && ccCotId == null
+			|| (coaIdCt.re1Required == true) && ccRe1Id == null
+			|| (coaIdCt.re2Required == true) && ccRe2Id == null
+		))
+then
+	warnings.rejectValue("FPtPosting","coaIdCt","missingRequiredCostCenter",null);
+end
+
+//check_posting
+rule FPtPostingRequiredCostCenterCoaIdDt
+	salience -999
+when
+	$e: FPtPosting(deleted == false && coaIdDt != null && (
+			(coaIdDt.outRequired == true) && ccOutId == null
+			|| (coaIdDt.ebkRequired == true) && ccEbkId == null
+			|| (coaIdDt.funRequired == true) && ccFunId == null
+			|| (coaIdDt.prmRequired == true) && ccPrmId == null
+			|| (coaIdDt.fieRequired == true) && ccFieId == null
+			|| (coaIdDt.parRequired == true) && ccParId == null
+			|| (coaIdDt.gteRequired == true) && ccGteId == null
+			|| (coaIdDt.cotRequired == true) && ccCotId == null
+			|| (coaIdDt.re1Required == true) && ccRe1Id == null
+			|| (coaIdDt.re2Required == true) && ccRe2Id == null
+		))
+then
+	warnings.rejectValue("FPtPosting","coaIdDt","missingRequiredCostCenter",null);
+end
+
+//delete_posting
+rule FPtPostingsDeleteCheck
+	salience -999
+when
+	$e: FPtPosting(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete"))
+			&& (jolId == null 
+				|| jolId.status!.listOptionItemCode != LoiPtJournalStatus.PT_JOURNAL_STATUS_C
+				|| coaStatus!.listOptionItemCode != LoiPtPostingCoaStatus.PT_POSTING_COA_STATUS_U
+			)
+		)
+then
+	warnings.rejectValue("FPtPosting","deleted","cannotChangeJournal",null);
+end
+
+rule FPtPostingInsertFPtJournalOutCodeAndPostDate when
+	$fpt: FPtPosting(jolId != null  && validationEvent.startsWith("beforeCreate") && company != null )
+	$jol: FPtJournal(outCode != null && postDate != null) from $fpt.jolId
+then
+	modify($fpt){
+		setOutCode($jol.getOutCode()),
+		setPostDate($jol.getPostDate())
+	}
+end
+
+rule FPtPostingPostDateUpdateDisable when
+	$e: FPtPosting(validationEvent.startsWith("beforeSave") && company != null)
+	$old: FPtPosting(deleted == false && (jolId!.status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || jolId!.status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S) //Осчетоводен, Сторниран
+		&& jolId!.ccStatus!.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_P //Обработен
+		&& jolId!.jteId!.type.listOptionItemCode != LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_E //Крайно салдо
+		&& (postDate.month != $e.postDate.month || postDate.year != $e.postDate.year)) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FPtPosting","postDate","cannotChangeJournal",$old);
+end
+
+rule FPtPostingPostDateDeleteDisable when
+	$e: FPtPosting(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$old: FPtPosting(deleted == false && (jolId!.status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_P || jolId!.status!.listOptionItemCode == LoiPtJournalStatus.PT_JOURNAL_STATUS_S) //Осчетоводен, Сторниран
+		&& jolId!.ccStatus!.listOptionItemCode == LoiPtJournalCcStatus.PT_JOURNAL_CC_STATUS_P //Обработен
+		&& jolId!.jteId!.type.listOptionItemCode != LoiJournalTypeCalculationType.JOURNAL_TYPE_CALCULATION_TYPE_E //Крайно салдо
+	) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FPtPosting","deleted","cannotChangeJournal",$e);
+end
+
+//validate_batch_closing_accounts
+rule FPtPostingValidateBatchClosingAccounts
+	salience -999
+when
+	$e: FPtPosting(deleted == false && jolId!.bahId != null)
+	$fk: FPtClosingAccount(deleted == false) from $e.jolId.bahId.fPtClosingAccounts
+then
+	warnings.rejectValue("FPtPosting","jolId","postingLocked",null);
+end
+
+
+rule FCtTransitionTypeCodeNull
+	salience -999
+when
+	$su: FCtTransitionType(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtTransitionType","code","notNull",null);
+end
+
+rule FCtTransitionTypeNameNull
+	salience -999
+when
+	$su: FCtTransitionType(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtTransitionType","name","notNull",null);
+end
+
+rule FCtTransitionTypeTteTypeNull
+	salience -999
+when
+	$su: FCtTransitionType(deleted == false && (tteType == null || tteType.deleted == true))
+then
+	warnings.rejectValue("FCtTransitionType","tteType","notNull",null);
+end
+
+rule FCtTransitionTypeTteTypeDefault when
+	$e: FCtTransitionType(tteType == null && company != null)
+	$tt: LoiCTransitionType() from droolsRuleProcedures.findLoiCTransitionTypeByCodeAndCompanyAndDeleted(LoiCTransitionType.CT_TRANSITION_TYPE_N, $e.company, false)
+then
+	modify( $e ) {
+		setTteType( $tt );
+	}
+end
+
+rule FCtTransitionTypeTteSideNull
+	salience -999
+when
+	$su: FCtTransitionType(deleted == false && (tteSide == null || tteSide.deleted == true))
+then
+	warnings.rejectValue("FCtTransitionType","tteSide","notNull",null);
+end
+
+rule FCtTransitionTypeTteSideDefault when
+	$e: FCtTransitionType(tteSide == null && company != null)
+	$ts: LoiCTransitionSide() from droolsRuleProcedures.findLoiCTransitionSideByTransitionSideAndCompany(LoiCTransitionSide.CT_TRANSITION_SIDE_N, $e.company, false)
+then
+	modify( $e ) {
+		setTteSide($ts);
+	}
+end
+
+rule LoiCTransitionSideFkFCtTransitionType
+	salience -999
+when
+	$e: LoiCTransitionSide(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtTransitionType(deleted == false) from $e.fCtTransitionTypes
+then
+	warnings.rejectValue("LoiCTransitionSide","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiCTransitionTypeFkFCtTransitionType
+	salience -999
+when
+	$e: LoiCTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtTransitionType(deleted == false) from $e.fCtTransitionTypes
+then
+	warnings.rejectValue("LoiCTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtInvDealTypeCodeNull
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && (code == null || code.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtInvDealType","code","notNull",null);
+end
+
+rule FCtInvDealTypeNameNull
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && (name == null || name.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtInvDealType","name","notNull",null);
+end
+
+rule FCtInvDealTypeSideNull
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && (side == null || side.deleted == true))
+then
+	warnings.rejectValue("FCtInvDealType","side","notNull",null);
+end
+
+rule FCtInvDealTypePercentVatNull
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && percentVat == null)
+then
+	warnings.rejectValue("FCtInvDealType","percentVat","notNull",null);
+end
+
+rule FCtInvDealTypeStatusNull
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && (status == null || status.trim().isEmpty()))
+then
+	warnings.rejectValue("FCtInvDealType","status","notNull",null);
+end
+
+rule FCtInvDealTypeSideValues
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && side != null && side.listOptionItemCode != LoiBatchJteDefaultSide.BATCH_JTE_DEFAULT_SIDE_P && side.listOptionItemCode != LoiBatchJteDefaultSide.BATCH_JTE_DEFAULT_SIDE_S)
+then
+	warnings.rejectValue("FCtInvDealType","side","notAnOption",null);
+end
+
+rule LoiBatchJteDefaultSideFkFCtInvDealType
+	salience -999
+when
+	$e: LoiBatchJteDefaultSide(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtInvDealType(deleted == false) from $e.fCtInvDealTypes
+then
+	warnings.rejectValue("LoiBatchJteDefaultSide","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtInvDealTypeStatusValues
+	salience -999
+when
+	$e: FCtInvDealType(deleted == false && status != null && status != "A" && status != "I")
+then
+	warnings.rejectValue("FCtInvDealType","status","notAnOption",null);
+end
+
+rule FCtInvDealTypeFkCSale when
+	$e: FCtInvDealType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: CSale(deleted == false) from $e.sales
+then
+	insert( $fk );
+	modify( $fk ) {
+		setDeleted( true );
+	}
+	entitiesToBeSaved.add( $fk );
+end
+
+
+rule FBreTransitionOutCodeNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FBreTransition","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFBreTransition
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FBreTransitionPostDateNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && postDate == null)
+then
+	warnings.rejectValue("FBreTransition","postDate","notNull",null);
+end
+
+rule FBreTransitionModuleNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (module == null || module.trim().isEmpty()))
+then
+	warnings.rejectValue("FBreTransition","module","notNull",null);
+end
+
+rule FBreTransitionTteCodeNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (tteCode == null || tteCode.deleted == true))
+then
+	warnings.rejectValue("FBreTransition","tteCode","notNull",null);
+end
+
+rule FCtTransitionTypeFkFBreTransition
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FBreTransitionRefNoNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (refNo == null || refNo.trim().isEmpty()))
+then
+	warnings.rejectValue("FBreTransition","refNo","notNull",null);
+end
+
+rule FBreTransitionRefDateNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && refDate == null)
+then
+	warnings.rejectValue("FBreTransition","refDate","notNull",null);
+end
+
+rule FBreTransitionAmountTotalNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && amountTotal == null)
+then
+	warnings.rejectValue("FBreTransition","amountTotal","notNull",null);
+end
+
+rule FBreTransitionCuyCodeNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FBreTransition","cuyCode","notNull",null);
+end
+
+rule FBreTransitionCuyCodeDefault when
+	$e: FBreTransition(cuyCode == null && company != null)
+	$cuyCode: CCtCurrency() from droolsRuleProcedures.findCCtCurrencyByCodeAndCompanyAndDeleted("BGN", $e.company, false)
+then
+	modify( $e ) {
+		setCuyCode($cuyCode);
+	}
+end
+
+rule CCtCurrencyFkFBreTransition
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FBreTransitionCuyRateNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && cuyRate == null)
+then
+	warnings.rejectValue("FBreTransition","cuyRate","notNull",null);
+end
+
+rule FBreTransitionCuyRateDefault when
+	$e: FBreTransition(cuyRate == null && company != null)
+then
+	BigDecimal defaultCuyRate = BigDecimal.valueOf(1);
+	modify( $e ) {
+		setCuyRate(defaultCuyRate);
+	}
+end
+
+rule FBreTransitionResultNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && (result == null || result.deleted == true))
+then
+	warnings.rejectValue("FBreTransition","result","notNull",null);
+end
+
+rule FBreTransitionResultDefault when
+	$e: FBreTransition(result == null && company != null)
+	$result: LoiBreTransitionResult() from droolsRuleProcedures.findLoiBreTransitionResultByListOptionItemCodeAndCompanyAndDeleted(LoiBreTransitionResult.BRE_TRANSITION_RESULT_WAITING, $e.company, false)
+then
+	modify( $e ) {
+		setResult($result);
+	}
+end
+
+rule FBreTransitionCostNull
+	salience -999
+when
+	$su: FBreTransition(deleted == false && cost == null)
+then
+	warnings.rejectValue("FBreTransition","cost","notNull",null);
+end
+
+rule FBreTransitionCostDefault when
+	$e: FBreTransition(cost == null && company != null)
+then
+	BigDecimal defaultCost = BigDecimal.valueOf(0.0);
+	modify( $e ) {
+		setCost(defaultCost);
+	}
+end
+
+rule FPtBatchFkFBreTransition
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtInvDealTypeFkFBreTransition
+	salience -999
+when
+	$e: FCtInvDealType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCtInvDealType","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiBatchTypeRuleDependenceTypeFkFBreTransition
+	salience -999
+when
+	$e: LoiBatchTypeRuleDependenceType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("LoiBatchTypeRuleDependenceType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkFkFBreTransition
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionFkFBreTransition
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramFkFBreTransition
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceFkFBreTransition
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFBreTransition
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcGoodsTypeFkFBreTransition
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractFkFBreTransition
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkCcOutIdFBreTransition
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.ccOutIdFBreTransitions
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFBreTransition
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2FkFBreTransition
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FBreTransition(deleted == false) from $e.fBreTransitions
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+rule FBreTransitionCheckUpdatePossible
+	salience -999
+when
+	$e: FBreTransition(deleted != true && (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeSave")))
+	$old: FBreTransition(deleted == false && result!.listOptionItemCode == LoiBreTransitionResult.BRE_TRANSITION_RESULT_OK) from cleanEmWrapper.getOriginalEntity($e)
+then
+	warnings.rejectValue("FBreTransition","result","breTransitionLocked",$e.getResult());
+end
+
+
+rule FPtBatchCcDetailBahIdNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && (bahId == null || bahId.deleted == true))
+then
+	warnings.rejectValue("FPtBatchCcDetail","bahId","notNull",null);
+end
+
+rule FPtBatchFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailTteIdNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && (tteId == null || tteId.deleted == true))
+then
+	warnings.rejectValue("FPtBatchCcDetail","tteId","notNull",null);
+end
+
+rule FCtTransitionTypeFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailCuyCodeNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FPtBatchCcDetail","cuyCode","notNull",null);
+end
+
+rule FPtBatchCcDetailCuyCodeDefault when
+	$e: FPtBatchCcDetail(cuyCode == null && bahId != null && bahId.cuyCode != null)
+then
+	modify( $e ) {
+		setCuyCode($e.getBahId().getCuyCode());
+	}
+end
+
+rule CCtCurrencyFkFPtBatchCcDetail
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailPostDateNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && postDate == null)
+then
+	warnings.rejectValue("FPtBatchCcDetail","postDate","notNull",null);
+end
+
+rule FPtBatchCcDetailPostDateDefault when
+	$e: FPtBatchCcDetail(postDate == null && bahId != null && bahId.postDate != null)
+then
+	modify( $e ) {
+		setPostDate($e.getBahId().getPostDate());
+	}
+end
+
+rule FPtBatchCcDetailStatusNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FPtBatchCcDetail","status","notNull",null);
+end
+
+rule LoiPtBatchCcDetailStatusFkFPtBatchCcDetail
+	salience -999
+when
+	$e: LoiPtBatchCcDetailStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("LoiPtBatchCcDetailStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailStatusDefault when
+	$e: FPtBatchCcDetail(status == null && company != null)
+	$status: LoiPtBatchCcDetailStatus() from droolsRuleProcedures.findLoiPtBatchCcDetailStatusByCodeAndCompanyAndDeleted(LoiPtBatchCcDetailStatus.PT_BATCH_CC_DETAIL_STATUS_C, $e.company, false)
+then
+	modify( $e ) {
+		setStatus($status);
+	}
+end
+
+rule FPtBatchCcDetailResultNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && result == null)
+then
+	warnings.rejectValue("FPtBatchCcDetail","result","notNull",null);
+end
+
+rule FPtBatchCcDetailResultDefault when
+	$e: FPtBatchCcDetail(result == null && company != null)
+then
+	Long defaultResult = Long.valueOf(-1);
+	modify( $e ) {
+		setResult(defaultResult);
+	}
+end
+
+rule FPtBatchCcDetailAmountTotalNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && amountTotal == null)
+then
+	warnings.rejectValue("FPtBatchCcDetail","amountTotal","notNull",null);
+end
+
+rule FPtBatchCcDetailAmountTotalDefault when
+	$e: FPtBatchCcDetail(amountTotal == null && bahId != null && bahId.amount != null)
+then
+	modify( $e ) {
+		setAmountTotal($e.getBahId().getAmount());
+	}
+end
+
+rule FPtBatchCcDetailAmountDoNull
+	salience -999
+when
+	$e: FPtBatchCcDetail(deleted == false && amountDo == null)
+then
+	warnings.rejectValue("FPtBatchCcDetail","amountDo","notNull",null);
+end
+
+rule FPtBatchCcDetailAmountDoDefault when
+	$e: FPtBatchCcDetail(amountVat == null && bahId != null && bahId.amount2 != null)
+then
+	modify( $e ) {
+		setAmountDo($e.getBahId().getAmount2());
+	}
+end
+
+rule FPtBatchCcDetailAmountVatDefault when
+	$e: FPtBatchCcDetail(amountVat == null && bahId != null && bahId.amount3 != null)
+then
+	modify( $e ) {
+		setAmountVat($e.getBahId().getAmount3());
+	}
+end
+
+rule FPtBatchCcDetailOutCodeNull
+	salience -999
+when
+	$su: FPtBatchCcDetail(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtBatchCcDetail","outCode","notNull",null);
+end
+
+rule FPtBatchCcDetailOrganizationUnitDefault when
+	$e: FPtBatchCcDetail(outCode == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setOutCode( $ou )
+	}
+end
+
+rule CCcOrganizationUnitFkFPtBatchCcDetail
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFPtBatchCcDetail
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcGoodsTypeFkFPtBatchCcDetail
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractFkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailOrganizationUnitCcOutIdDefault when
+	$e: FPtBatchCcDetail(ccOutId == null && company != null)
+	$ou: CCcOrganizationUnit() from droolsRuleProcedures.findCCcOrganizationUnitByCodeAndCompanyAndDeleted("01", $e.company, false)
+then
+	modify( $e ) {
+		setCcOutId( $ou )
+	}
+end
+
+rule CCcOrganizationUnitFkCcOutIdFPtBatchCcDetail
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.ccOutIdFPtBatchCcDetails
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2FkFPtBatchCcDetail
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiBatchTypeRuleDependenceTypeFkFPtBatchCcDetail
+	salience -999
+when
+	$e: LoiBatchTypeRuleDependenceType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchCcDetail(deleted == false) from $e.fPtBatchCcDetails
+then
+	warnings.rejectValue("LoiBatchTypeRuleDependenceType","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchCcDetailCcParIdDefault when
+	$e: FPtBatchCcDetail(ccParId == null && bahId != null && bahId.parId != null)
+then
+	modify( $e ) {
+		setCcParId($e.getBahId().getParId());
+	}
+end
+
+rule FPtBatchCcDetailCcRe1IdDefault when
+	$e: FPtBatchCcDetail(ccRe1Id == null && company != null && outCode != null)
+	$ccRe1: FCcReserve1() from droolsRuleProcedures.findFCcReserve1ByOutCodeAndCodeAndCompanyAndDeleted($e.outCode, $e.outCode.code, $e.company, false)
+then
+	modify( $e ) {
+		setCcRe1Id($ccRe1);
+	}
+end
+
+
+rule FPtClosingAccountPeriodMonthNull
+	salience -999
+when
+	$su: FPtClosingAccount(deleted == false && periodMonth == null)
+then
+	warnings.rejectValue("FPtClosingAccount","periodMonth","notNull",null);
+end
+
+rule FPtClosingAccountPeriodMonthDefault when
+	$e: FPtClosingAccount(periodMonth == null)
+	$periodMonth: LoiPtClosingAccountPeriodMonth() from droolsRuleProcedures.findLoiPtClosingAccountPeriodMonthByCodeAndCompanyAndDeleted(LoiPtClosingAccountPeriodMonth.PT_CLOSING_ACCOUNT_PERIOD_MONTH_CK_12, $e.company, false)
+then
+	modify( $e ) {
+		setPeriodMonth( $periodMonth );
+	}
+end
+
+rule LoiPtClosingAccountPeriodMonthFkFPtClosingAccount
+	salience -999
+when
+	$e: LoiPtClosingAccountPeriodMonth(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("LoiPtClosingAccountPeriodMonth","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtClosingAccountPeriodYearNull
+	salience -999
+when
+	$su: FPtClosingAccount(deleted == false && (periodYear == null || periodYear.trim().isEmpty()))
+then
+	warnings.rejectValue("FPtClosingAccount","periodYear","notNull",null);
+end
+
+rule FPtClosingAccountOutCodeNull
+	salience -999
+when
+	$su: FPtClosingAccount(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtClosingAccount","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFPtClosingAccount
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtClosingAccountCoaIdNull
+	salience -999
+when
+	$su: FPtClosingAccount(deleted == false && (coaId == null || coaId.deleted == true))
+then
+	warnings.rejectValue("FPtClosingAccount","coaId","notNull",null);
+end
+
+rule FChartAccountFkFPtClosingAccount
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchFkFPtClosingAccount
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtClosingAccountStatusNull
+	salience -999
+when
+	$su: FPtClosingAccount(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FPtClosingAccount","status","notNull",null);
+end
+
+rule FPtClosingAccountStatusDefault when
+	$e: FPtClosingAccount(status == null)
+	$status: LoiPtClosingAccountStatus() from droolsRuleProcedures.findLoiPtClosingAccountStatusByCodeAndCompanyAndDeleted(LoiPtClosingAccountStatus.PT_CLOSING_ACCOUNT_STATUS_S, $e.company, false)
+then
+	modify( $e ) {
+		setStatus( $status );
+	}
+end
+
+rule LoiPtClosingAccountStatusFkFPtClosingAccount
+	salience -999
+when
+	$e: LoiPtClosingAccountStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtClosingAccount(deleted == false) from $e.fPtClosingAccounts
+then
+	warnings.rejectValue("LoiPtClosingAccountStatus","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FHpCcBalanceOutCodeNull
+	salience -999
+when
+	$e: FHpCcBalance(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FHpCcBalance","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFHpCcBalance
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FHpCcBalancePeriodNull
+	salience -999
+when
+	$e: FHpCcBalance(deleted == false && (period == null || period.trim().isEmpty()))
+then
+	warnings.rejectValue("FHpCcBalance","period","notNull",null);
+end
+
+rule FHpCcBalanceCoaIdNull
+	salience -999
+when
+	$e: FHpCcBalance(deleted == false && (coaId == null || coaId.deleted == true))
+then
+	warnings.rejectValue("FHpCcBalance","coaId","notNull",null);
+end
+
+rule FChartAccountFkFHpCcBalance
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkFkFHpCcBalance
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionFkFHpCcBalance
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceFkFHpCcBalance
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramFkFHpCcBalance
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFHpCcBalance
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcGoodsTypeFkFHpCcBalance
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractFkFHpCcBalance
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkCcOutIdFHpCcBalance
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.ccOutIdFHpCcBalances
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFHpCcBalance
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2FkFHpCcBalance
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FHpCcBalance(deleted == false) from $e.fHpCcBalances
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FPtCcBalanceOutCodeNull
+	salience -999
+when
+	$e: FPtCcBalance(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtCcBalance","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFPtCcBalance
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtCcBalancePeriodNull
+	salience -999
+when
+	$e: FPtCcBalance(deleted == false && (period == null || period.trim().isEmpty()))
+then
+	warnings.rejectValue("FPtCcBalance","period","notNull",null);
+end
+
+rule FPtCcBalanceFCoaIdNull
+	salience -999
+when
+	$e: FPtCcBalance(deleted == false && (coaId == null || coaId.deleted == true))
+then
+	warnings.rejectValue("FPtCcBalance","coaId","notNull",null);
+end
+
+rule FChartAccountFkFPtCcBalance
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkFkFPtCcBalance
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionFkFPtCcBalance
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceFkFPtCcBalance
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramFkFPtCcBalance
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcPartnerFkFPtCcBalance
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcGoodsTypeFkFPtCcBalance
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractFkFPtCcBalance
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkCcOutIdFPtCcBalance
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.ccOutIdFPtCcBalances
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFPtCcBalance
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2FkFPtCcBalance
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCcBalance(deleted == false) from $e.fPtCcBalances
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FPtBatchLinkBahId1Null
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (bahId1 == null || bahId1.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","bahId1","notNull",null);
+end
+
+rule FPtBatchFkFPtBatchLink
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.fPtBatchLinks
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchLinkBahId2Null
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (bahId2 == null || bahId2.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","bahId2","notNull",null);
+end
+
+rule FPtBatchFkBahId2FPtBatchLink
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.bahId2FPtBatchLinks
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchLinkFlag1Null
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (flag1 == null || flag1.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","flag1","notNull",null);
+end
+
+rule LoiLinkedFlagFkFPtBatchLink1
+	salience -999
+when
+	$e: LoiLinkedFlag(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.fPtBatchLinksFlag1
+then
+	warnings.rejectValue("LoiLinkedFlag","deleted","fkDenyDelete",$fk);
+end
+
+rule LoiLinkedFlagFkFPtBatchLink2
+	salience -999
+when
+	$e: LoiLinkedFlag(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.fPtBatchLinksFlag2
+then
+	warnings.rejectValue("LoiLinkedFlag","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchLinkFlag2Null
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (flag2 == null || flag2.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","flag2","notNull",null);
+end
+
+rule FPtBatchLinkAmountNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && amount == null)
+then
+	warnings.rejectValue("FPtBatchLink","amount","notNull",null);
+end
+
+rule FPtBatchLinkAmountCurrencyNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && amountCurrency == null)
+then
+	warnings.rejectValue("FPtBatchLink","amountCurrency","notNull",null);
+end
+
+rule FPtBatchLinkCuyCodeNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","cuyCode","notNull",null);
+end
+
+rule CCtCurrencyFkFPtBatchLink
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.fPtBatchLinks
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchLinkCuyRateNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && cuyRate == null)
+then
+	warnings.rejectValue("FPtBatchLink","cuyRate","notNull",null);
+end
+
+rule FPtBatchLinkCuyUnitNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && cuyUnit == null)
+then
+	warnings.rejectValue("FPtBatchLink","cuyUnit","notNull",null);
+end
+
+rule FPtBatchLinkStatusNull
+	salience -999
+when
+	$e: FPtBatchLink(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FPtBatchLink","status","notNull",null);
+end
+
+rule LoiPtBatchLinkStatusFkFPtBatchLink
+	salience -999
+when
+	$e: LoiPtBatchLinkStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtBatchLink(deleted == false) from $e.fPtBatchLinks
+then
+	warnings.rejectValue("LoiPtBatchLinkStatus","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FInvInvoiceInvNoNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && invNo == null)
+then
+	warnings.rejectValue("FInvInvoice","invNo","notNull",null);
+end
+
+rule FInvInvoiceInvNoAutoinc when
+	$e: FInvInvoice(invNo == null && company != null && validationEvent.startsWith("before"))
+then
+	Long newLongNum = droolsRuleProcedures.getMaxAutoIncNum($e);
+	Integer newNum = newLongNum == null ? null : Math.toIntExact(newLongNum);
+	modify( $e ) {
+		setInvNo( newNum );
+	}
+	warnings.add($e.getClass().getName()+".invNo default"+newNum, false);
+end
+
+rule FInvInvoiceInvDateNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && invDate == null)
+then
+	warnings.rejectValue("FInvInvoice","invDate","notNull",null);
+end
+
+rule FInvInvoiceDateAccountNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && dateAccount == null)
+then
+	warnings.rejectValue("FInvInvoice","dateAccount","notNull",null);
+end
+
+rule FInvInvoiceFkFInvInvoice
+	salience -999
+when
+	$e: FInvInvoice(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FInvInvoice","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceOutCodeNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFInvInvoice
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceTotalAmountNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && totalAmount == null)
+then
+	warnings.rejectValue("FInvInvoice","totalAmount","notNull",null);
+end
+
+rule FInvInvoicePaymentTypeNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (paymentType == null || paymentType.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","paymentType","notNull",null);
+end
+
+rule LoiInvInvoicePaymentTypeFkFInvInvoice
+	salience -999
+when
+	$e: LoiInvInvoicePaymentType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("LoiInvInvoicePaymentType","deleted","fkDenyDelete",$fk);
+end
+
+rule CCtBankAccountFkFInvInvoice
+	salience -999
+when
+	$e: CCtBankAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("CCtBankAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceReasonNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (reason == null || reason.trim().isEmpty()))
+then
+	warnings.rejectValue("FInvInvoice","reason","notNull",null);
+end
+
+rule FInvInvoiceCompilerNameNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (compilerName == null || compilerName.trim().isEmpty()))
+then
+	warnings.rejectValue("FInvInvoice","compilerName","notNull",null);
+end
+
+rule FInvInvoiceSalePeriodDefault when
+	$e: FInvInvoice(salePeriod == null)
+then
+	String defaultSalePeriod = currentLocalDate.getMonth() + "" + currentLocalDate.getYear();
+
+	modify( $e ) {
+		setSalePeriod(defaultSalePeriod);
+	}
+end
+
+rule FInvInvoicePurchasePeriodDefault when
+	$e: FInvInvoice(purchasePeriod == null)
+then
+	String defaultSalePeriod = currentLocalDate.getMonth() + "" + currentLocalDate.getYear();
+
+	modify( $e ) {
+		setPurchasePeriod(defaultSalePeriod);
+	}
+end
+
+rule FInvInvoiceInvTypeNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (invType == null || invType.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","invType","notNull",null);
+end
+
+rule LoiBatchJteDefaultSideFkFInvInvoice
+	salience -999
+when
+	$e: LoiBatchJteDefaultSide(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("LoiBatchJteDefaultSide","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceInvTypeDefault when
+	$e: FInvInvoice(invType == null)
+	$loi: LoiBatchJteDefaultSide() from droolsRuleProcedures.findLoiBatchJteDefaultSideByCodeAndCompanyAndDeleted(LoiBatchJteDefaultSide.BATCH_JTE_DEFAULT_SIDE_S, $e.company, false)
+then
+	modify( $e ) {
+		setInvType($loi);
+	}
+end
+
+rule FInvInvoiceCuyCodeNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (cuyCode == null || cuyCode.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","cuyCode","notNull",null);
+end
+
+rule CCtCurrencyFkFInvInvoice
+	salience -999
+when
+	$e: CCtCurrency(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("CCtCurrency","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceCuyRateNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && cuyRate == null)
+then
+	warnings.rejectValue("FInvInvoice","cuyRate","notNull",null);
+end
+
+rule FInvInvoiceCuyRateDefault when
+	$e: FInvInvoice(cuyRate == null)
+then
+	BigDecimal defaultCuyrate = BigDecimal.ONE;
+	modify( $e ) {
+		setCuyRate(defaultCuyrate);
+	}
+end
+
+rule FInvInvoiceStatusNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (status == null || status.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","status","notNull",null);
+end
+
+rule FInvInvoiceStatusDefault when
+	$e: FInvInvoice(status == null)
+	$loi: LoiInvInvoiceStatus() from droolsRuleProcedures.findLoiInvInvoiceStatusByCodeAndCompanyAndDeleted(LoiInvInvoiceStatus.INV_INVOICE_STATUS_C, $e.company, false)
+then
+	modify( $e ) {
+		setStatus($loi);
+	}
+end
+
+rule LoiInvInvoiceStatusFkFInvInvoice
+	salience -999
+when
+	$e: LoiInvInvoiceStatus(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("LoiInvInvoiceStatus","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchFkVodBahIdFInvInvoice
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.vodBahIdFInvInvoices
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtBatchFkFInvInvoice
+	salience -999
+when
+	$e: FPtBatch(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FPtBatch","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceProcessStatusNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && processStatus == null)
+then
+	warnings.rejectValue("FInvInvoice","processStatus","notNull",null);
+end
+
+rule FInvInvoiceProcessStatusDefault when
+	$e: FInvInvoice(processStatus == null)
+then
+	modify( $e ) {
+		setProcessStatus(-1);
+	}
+end
+
+rule FInvInvoiceCuyUnitNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && cuyUnit == null)
+then
+	warnings.rejectValue("FInvInvoice","cuyUnit","notNull",null);
+end
+
+rule FInvInvoiceCuyUnitDefault when
+	$e: FInvInvoice(cuyUnit == null)
+then
+	modify( $e ) {
+		setCuyUnit(1);
+	}
+end
+
+rule FInvInvoiceTteIdNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (tteId == null || tteId.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","tteId","notNull",null);
+end
+
+rule FCtTransitionTypeFkFInvInvoice
+	salience -999
+when
+	$e: FCtTransitionType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCtTransitionType","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceCcParIdNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (ccParId == null || ccParId.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","ccParId","notNull",null);
+end
+
+rule CCcPartnerFkFInvInvoice
+	salience -999
+when
+	$e: CCcPartner(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("CCcPartner","deleted","fkDenyDelete",$fk);
+end
+
+rule FInvInvoiceIdeIdNull
+	salience -999
+when
+	$e: FInvInvoice(deleted == false && (ideId == null || ideId.deleted == true))
+then
+	warnings.rejectValue("FInvInvoice","ideId","notNull",null);
+end
+
+rule FCtInvDealTypeFkFInvInvoice
+	salience -999
+when
+	$e: FCtInvDealType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCtInvDealType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcEbkFkFInvInvoice
+	salience -999
+when
+	$e: FCcEbk(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcEbk","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFunctionFkFInvInvoice
+	salience -999
+when
+	$e: FCcFunction(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcFunction","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcProgramFkFInvInvoice
+	salience -999
+when
+	$e: FCcProgram(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcProgram","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcFinsourceFkFInvInvoice
+	salience -999
+when
+	$e: FCcFinsource(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcFinsource","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcGoodsTypeFkFInvInvoice
+	salience -999
+when
+	$e: CCcGoodsType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("CCcGoodsType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcContractFkFInvInvoice
+	salience -999
+when
+	$e: FCcContract(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcContract","deleted","fkDenyDelete",$fk);
+end
+
+rule CCcOrganizationUnitFkCcOutIdFInvInvoice
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.ccOutIdFInvInvoices
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve1FkFInvInvoice
+	salience -999
+when
+	$e: FCcReserve1(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcReserve1","deleted","fkDenyDelete",$fk);
+end
+
+rule FCcReserve2FkFInvInvoice
+	salience -999
+when
+	$e: FCcReserve2(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FInvInvoice(deleted == false) from $e.fInvInvoices
+then
+	warnings.rejectValue("FCcReserve2","deleted","fkDenyDelete",$fk);
+end
+
+
+rule FPtCoaBalanceOutCodeNull
+	salience -999
+when
+	$su: FPtCoaBalance(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FPtCoaBalance","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFPtCoaBalance
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCoaBalance(deleted == false) from $e.fPtCoaBalances
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FPtCoaBalanceCtAmountNull
+	salience -999
+when
+	$su: FPtCoaBalance(deleted == false && ctAmount == null)
+then
+	warnings.rejectValue("FPtCoaBalance","ctAmount","notNull",null);
+end
+
+rule FPtCoaBalanceDtAmountNull
+	salience -999
+when
+	$su: FPtCoaBalance(deleted == false && dtAmount == null)
+then
+	warnings.rejectValue("FPtCoaBalance","dtAmount","notNull",null);
+end
+
+rule FPtCoaBalancePeriodNull
+	salience -999
+when
+	$su: FPtCoaBalance(deleted == false && (period == null || period.trim().isEmpty()))
+then
+	warnings.rejectValue("FPtCoaBalance","period","notNull",null);
+end
+
+rule FPtCoaBalanceCoaIdNull
+	salience -999
+when
+	$su: FPtCoaBalance(deleted == false && (coaId == null || coaId.deleted == true))
+then
+	warnings.rejectValue("FPtCoaBalance","coaId","notNull",null);
+end
+
+rule FChartAccountFkFPtCoaBalance
+	salience -999
+when
+	$e: FChartAccount(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FPtCoaBalance(deleted == false) from $e.fPtCoaBalances
+then
+	warnings.rejectValue("FChartAccount","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtStornoTypeOutCodeNull
+	salience -999
+when
+	$su: FCtStornoType(deleted == false && (outCode == null || outCode.deleted == true))
+then
+	warnings.rejectValue("FCtStornoType","outCode","notNull",null);
+end
+
+rule CCcOrganizationUnitFkFCtStornoType
+	salience -999
+when
+	$e: CCcOrganizationUnit(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtStornoType(deleted == false) from $e.fCtStornoTypes
+then
+	warnings.rejectValue("CCcOrganizationUnit","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtStornoTypeТypeNull
+	salience -999
+when
+	$su: FCtStornoType(deleted == false && (type == null || type.deleted == true))
+then
+	warnings.rejectValue("FCtStornoType","type","notNull",null);
+end
+
+rule LoiCtStornoTypeTypeFkFCtStornoType
+	salience -999
+when
+	$e: LoiCtStornoTypeType(deleted == true || (id == triggerObject#CommonRecord.id && validationEvent.startsWith("beforeDelete")))
+	$fk: FCtStornoType(deleted == false) from $e.fCtStornoTypes
+then
+	warnings.rejectValue("LoiCtStornoTypeType","deleted","fkDenyDelete",$fk);
+end
+
+rule FCtStornoTypeIsDefaultNull
+	salience -999
+when
+	$su: FCtStornoType(deleted == false && isDefault == null)
+then
+	warnings.rejectValue("FCtStornoType","isDefault","notNull",null);
+end
+
+rule FCtStornoTypeIsDefaultDefault when
+	$e: FCtStornoType(isDefault == null)
+then
+	modify( $e ) {
+		setIsDefault( false );
+	}
+end

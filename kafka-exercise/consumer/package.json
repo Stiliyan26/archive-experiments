@@ -1,0 +1,12 @@
+{
+  "name": "kafka-consumer",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node consumer.js"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "uuid": "^13.0.0"
+  }
+}

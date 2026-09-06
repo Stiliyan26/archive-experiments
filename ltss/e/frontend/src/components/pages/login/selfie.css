@@ -1,0 +1,165 @@
+/* Card container styling */
+/* .login-card {
+    width: 320px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+} */
+
+/* Title styling */
+/* .login-card h2 {
+    color: #e60000;
+    font-weight: bold;
+    margin-bottom: 20px;
+} */
+
+/* Form fields */
+/* .login-card input[type="text"],
+.login-card input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    outline: none;
+} */
+
+/* Button styling */
+/* .login-card button {
+    width: 100%;
+    padding: 12px;
+    margin: 50px 0;
+    border: 2px solid  #e60000;
+    border-radius: 4px;
+    background-color: #fff;
+    color:  #e60000;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    outline: none;
+} */
+
+/* .login-card button:hover {
+    background-color: #e60000;
+    color:  #fff;
+} */
+
+/* Disabled button look */
+/* .login-card button:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+} */
+
+/* Forgot password link */
+/* .login-card .forgot-password {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    text-decoration: none;
+    display: block;
+    margin-top: 10px;
+}
+
+.login-card .forgot-password:hover {
+    text-decoration: underline;
+} */
+
+/* FOR RESPONSIVE SCREEN*/
+
+/* Card container styling */
+.login-card {
+    width: 320px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Title styling */
+.login-card h2 {
+    color: #e60000;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Form fields */
+.login-card input[type="text"],
+.login-card input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    outline: none;
+}
+
+/* Button styling */
+.login-card button {
+    width: 100%;
+    padding: 12px;
+    margin: 50px 0;
+    border: 2px solid #e60000;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #e60000;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    outline: none;
+}
+
+.login-card button:hover {
+    background-color: #e60000;
+    color: #fff;
+}
+
+/* Responsive styles */
+
+/* For screens 768px and smaller (tablets) */
+@media (max-width: 768px) {
+    .login-card {
+        width: 80%; /* Adjust width for smaller screens */
+        padding: 20px; /* Reduce padding */
+        margin: 0 auto; /* Center the card */
+    }
+
+    .login-card h2 {
+        font-size: 20px; /* Slightly smaller title font */
+    }
+
+    .login-card button {
+        font-size: 14px; /* Slightly smaller button font */
+        padding: 10px; /* Reduce button padding */
+    }
+}
+
+/* For screens 480px and smaller (mobile) */
+@media (max-width: 480px) {
+    .login-card {
+        width: 90%; /* Expand width for very small screens */
+        padding: 15px; /* Further reduce padding */
+    }
+
+    .login-card h2 {
+        font-size: 18px; /* Smaller title font */
+        margin-bottom: 15px;
+    }
+
+    .login-card input[type="text"],
+    .login-card input[type="password"] {
+        font-size: 14px; /* Reduce font size of input fields */
+        padding: 8px; /* Reduce padding of input fields */
+    }
+
+    .login-card button {
+        font-size: 14px;
+        padding: 8px; /* Reduce button padding further */
+        margin: 30px 0; /* Adjust button margin */
+    }
+}

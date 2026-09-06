@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.grid {
+  --cell-size: min(18px, 2.4vw);
+  --cell-dead-color: #0b1120;
+  --cell-alive-color: #34d399;
+  --cell-border-color: rgba(148, 163, 184, 0.08);
+  display: grid;
+  gap: 2px;
+  justify-content: center;
+  grid-auto-rows: var(--cell-size);
+  padding: 8px;
+  background-color: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+.grid-cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 3px;
+  background-color: var(--cell-dead-color);
+  border: 1px solid var(--cell-border-color);
+  transition: background-color 1000ms ease-in, border-color 1000ms ease-in;
+}
+
+.grid-cell--alive {
+  background-color: var(--cell-alive-color);
+  border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.45);
+}
